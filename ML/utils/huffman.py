@@ -1,7 +1,6 @@
 from collections import defaultdict, namedtuple
 import heapq
 
-# Define the Node structure using namedtuple
 class Node(namedtuple("Node", ["char", "freq", "left", "right"])):
     def __lt__(self, other):
         return self.freq < other.freq
@@ -54,3 +53,14 @@ class HuffmanEncoder:
                 result.append(node.char)
                 node = tree
         return ''.join(result)
+
+    # ✅ ADD THIS to enable Python to Node.js transfer
+    def serialize_tree(self, node):
+        if node is None:
+            return None
+        return {
+            "char": node.char,
+            "freq": node.freq,
+            "left": self.serialize_tree(node.left),
+            "right": self.serialize_tree(node.right)
+        }

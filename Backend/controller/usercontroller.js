@@ -7,9 +7,11 @@ const register=async(req,res)=>{
         if(existingUser){
             return res.status(400).json({error:"User already exists"});
         }
-        const newUser=new user({name,password,email});
+        const hashedPassword=await user.hashPassword(password);
+        const newUser=new user({name,password:hashedPassword,email});
+        const token=newUser.generateAuthToken();
         await newUser.save();
-        res.status(200).json({message:"User registered successfully"});
+        res.status(200).json({newUser,token});
     } catch (error) {
         console.error("Error registering user:",error);
         res.status(500).json({error:"Internal server error"});
@@ -19,14 +21,16 @@ const register=async(req,res)=>{
 const login=async(req,res)=>{
     const {email,password}=req.body;
     try {
-        const user=await user.findOne({email});
-        if(!user){
-            return res.status(401).json({error:"Invalid credentials"});
+        const user1=await user.findOne({email});
+        if(!user1){
+            return res.status(401).json({error:"Invalid User"});
         }
-        if(user.password!==password){
-            return res.status(401).json({error:"Invalid credentials"});
+         const isMatch = await user1.comparePassword(password);
+        if(!isMatch){
+            return res.status(401).json({error:"Invalid Password"});
         }
-        res.status(200).json({message:"Login successful"});
+        const token=user1.generateAuthToken();
+        res.status(200).json({user:user1,token});
     } catch (error) {
         console.error("Error logging in:",error);
         res.status(500).json({error:"Internal server error"});

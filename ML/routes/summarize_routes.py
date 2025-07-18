@@ -47,3 +47,22 @@ def summarize_text():
         "compressed_binary": encoded_data,
         "decoded_text": decoded_text
     })
+
+# huffman_bp = Blueprint("huffman", __name__)
+
+@summarize_bp.route("/api/huffman-compress", methods=["POST"])
+def compress_text():
+    data = request.get_json()
+    text = data.get("text", "")
+    if not text:
+        return jsonify({"error": "No input text provided"}), 400
+
+    encoder = HuffmanEncoder()
+    encoded_text, tree = encoder.encode(text)
+    tree_json = encoder.serialize_tree(tree)
+
+    return jsonify({
+        "binary": encoded_text,
+        "tree": tree_json
+    })
+
