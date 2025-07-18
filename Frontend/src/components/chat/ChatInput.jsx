@@ -20,7 +20,7 @@ function ChatInput({ question, setQuestion, handleSubmit, loading }) {
           }}
         />
         <button
-          onClick={handleSubmit}
+          onClick={(e)=>(handleSubmit(e))}
           disabled={loading || !question.trim()}
           className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >

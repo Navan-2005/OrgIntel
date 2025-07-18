@@ -10,6 +10,7 @@ import DocumentViewerHeader from '../components/document-viewer/DocumentViewerHe
 import DocumentPreview from '../components/document-viewer/DocumentPreview';
 import ChatWindow from '../components/chat/ChatWindow';
 import ChatInput from '../components/chat/ChatInput';
+import axios from 'axios';
 
 function Pdf() {
   // State management (mostly remains here as it's global to the page)
@@ -76,94 +77,207 @@ function Pdf() {
     }
   };
 
-  const handleUpload = async () => {
-    if (files.length === 0) {
-      alert('Please select PDF files to upload.');
-      return;
-    }
+  // const handleUpload = async () => {
+  //   if (files.length === 0) {
+  //     alert('Please select PDF files to upload.');
+  //     return;
+  //   }
 
-    try {
-      setLoading(true);
-      // Simulate API call - replace with actual axios call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+  //   try {
+  //     setLoading(true);
+  //     // Simulate API call - replace with actual axios call
+  //     await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const newUploadedFiles = Array.from(files).map(file => ({
-        name: file.name,
-        size: file.size,
-        uploadTime: new Date(),
-        id: Date.now() + Math.random(),
-        pages: Math.floor(Math.random() * 50) + 1, // Simulated page count
-        rawFile: file // Keep reference to the actual File object for potential future use (e.g., react-pdf)
-      }));
+  //     const newUploadedFiles = Array.from(files).map(file => ({
+  //       name: file.name,
+  //       size: file.size,
+  //       uploadTime: new Date(),
+  //       id: Date.now() + Math.random(),
+  //       pages: Math.floor(Math.random() * 50) + 1, // Simulated page count
+  //       rawFile: file // Keep reference to the actual File object for potential future use (e.g., react-pdf)
+        
+  //     })
+  //   );
+  //     console.log('New uploaded files: ', files.FileList);
       
-      setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
-      setFilesUploaded(true);
-      setFiles([]); // Clear selected files for next upload
+  //     const response=await axios.post('http://localhost:3000/pdf/upload', { files: files.fileList,sessionId:123});
+  //     console.log('Response after uploading pdf : ',response);
       
-      const welcomeMessage = {
-        type: 'bot',
-        message: `Great! I've processed ${newUploadedFiles.length} PDF file(s). You can now ask me questions about your documents. Try asking something like "What is the main topic of this document?" or "Can you summarize the key points?"`,
-        timestamp: new Date()
-      };
-      setChatHistory(prev => [...prev, welcomeMessage]);
+  //     setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+  //     setFilesUploaded(true);
+  //     setFiles([]); // Clear selected files for next upload
       
-    } catch (err) {
-      alert('Error uploading files: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     const welcomeMessage = {
+  //       type: 'bot',
+  //       message: `Great! I've processed ${newUploadedFiles.length} PDF file(s). You can now ask me questions about your documents. Try asking something like "What is the main topic of this document?" or "Can you summarize the key points?"`,
+  //       timestamp: new Date()
+  //     };
+  //     setChatHistory(prev => [...prev, welcomeMessage]);
+      
+  //   } catch (err) {
+  //     alert('Error uploading files: ' ,err.message);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Handlers for chat functionality
+   const handleUpload = async () => {
+  if (!files || files.length === 0) {
+    alert('Please select PDF files to upload.');
+    return;
+  }
+
+  const formData = new FormData();
+
+  // Append each file to FormData as 'pdfs' (name should match Multer field)
+  Array.from(files).forEach(file => {
+    formData.append('pdfs', file);  // <-- Key must match multer.array('pdfs')
+  });
+
+  // Add sessionId
+  formData.append('sessionId', sessionId);
+
+  try {
+    setLoading(true);
+
+    const response = await axios.post('http://localhost:3000/pdf/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log('Upload response:', response.data);
+
+    const newUploadedFiles = Array.from(files).map(file => ({
+      name: file.name,
+      size: file.size,
+      uploadTime: new Date(),
+      id: Date.now() + Math.random(),
+      pages: Math.floor(Math.random() * 50) + 1,
+      rawFile: file,
+    }));
+
+    setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+    setFilesUploaded(true);
+    setFiles([]);
+
+    const welcomeMessage = {
+      type: 'bot',
+      message: `Great! I've processed ${newUploadedFiles.length} PDF file(s). You can now ask me questions about your documents.`,
+      timestamp: new Date(),
+    };
+    setChatHistory(prev => [...prev, welcomeMessage]);
+
+  } catch (err) {
+    console.error('Upload error:', err);
+    alert('Error uploading files: ' + (err.response?.data?.error || err.message));
+  } finally {
+    setLoading(false);
+  }
+};
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!filesUploaded) {
+  //     const errorMessage = {
+  //       type: 'bot',
+  //       message: 'Please upload PDF files first before asking questions.',
+  //       timestamp: new Date()
+  //     };
+  //     setChatHistory(prev => [...prev, errorMessage]);
+  //     return;
+  //   }
+
+  //   if (!question.trim()) {
+  //     return;
+  //   }
+
+  //   const userMessage = { type: 'user', message: question, timestamp: new Date() };
+  //   setChatHistory(prev => [...prev, userMessage]);
+
+  //   try {
+  //     setLoading(true);
+  //     // Simulate API call - replace with actual axios call
+  //     await new Promise(resolve => setTimeout(resolve, 1500));
+      
+  //     const responses = [
+  //       `Based on the document "${selectedFile ? selectedFile.name : 'your uploaded files'}", here's what I found: This appears to be related to your query about "${question}". The document contains relevant information that addresses your question.`,
+  //       `I've analyzed your documents and found several key points related to "${question}". The main themes include various aspects that directly relate to your inquiry.`,
+  //       `From the uploaded PDFs, I can see that your question about "${question}" is addressed in multiple sections. Let me provide you with a comprehensive answer based on the content.`
+  //     ];
+      
+  //     const botMessage = { 
+  //       type: 'bot', 
+  //       message: responses[Math.floor(Math.random() * responses.length)],
+  //       timestamp: new Date() 
+  //     };
+  //     setChatHistory(prev => [...prev, botMessage]);
+  //     setQuestion('');
+  //   } catch (err) {
+  //     const errorMessage = { 
+  //       type: 'error', 
+  //       message: 'Sorry, I encountered an error while processing your question. Please try again.',
+  //       timestamp: new Date() 
+  //     };
+  //     setChatHistory(prev => [...prev, errorMessage]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!filesUploaded) {
-      const errorMessage = {
-        type: 'bot',
-        message: 'Please upload PDF files first before asking questions.',
-        timestamp: new Date()
-      };
-      setChatHistory(prev => [...prev, errorMessage]);
-      return;
-    }
+  if (!filesUploaded) {
+    const errorMessage = {
+      type: 'bot',
+      message: 'Please upload PDF files first before asking questions.',
+      timestamp: new Date(),
+    };
+    setChatHistory(prev => [...prev, errorMessage]);
+    return;
+  }
 
-    if (!question.trim()) {
-      return;
-    }
+  if (!question.trim()) return;
 
-    const userMessage = { type: 'user', message: question, timestamp: new Date() };
-    setChatHistory(prev => [...prev, userMessage]);
-
-    try {
-      setLoading(true);
-      // Simulate API call - replace with actual axios call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const responses = [
-        `Based on the document "${selectedFile ? selectedFile.name : 'your uploaded files'}", here's what I found: This appears to be related to your query about "${question}". The document contains relevant information that addresses your question.`,
-        `I've analyzed your documents and found several key points related to "${question}". The main themes include various aspects that directly relate to your inquiry.`,
-        `From the uploaded PDFs, I can see that your question about "${question}" is addressed in multiple sections. Let me provide you with a comprehensive answer based on the content.`
-      ];
-      
-      const botMessage = { 
-        type: 'bot', 
-        message: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date() 
-      };
-      setChatHistory(prev => [...prev, botMessage]);
-      setQuestion('');
-    } catch (err) {
-      const errorMessage = { 
-        type: 'error', 
-        message: 'Sorry, I encountered an error while processing your question. Please try again.',
-        timestamp: new Date() 
-      };
-      setChatHistory(prev => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
-    }
+  const userMessage = {
+    type: 'user',
+    message: question,
+    timestamp: new Date(),
   };
+  setChatHistory(prev => [...prev, userMessage]);
+
+  try {
+    setLoading(true);
+
+    const response = await axios.post('http://localhost:3000/pdf/chat', {
+      question,
+      sessionId,
+    });
+
+    const botMessage = {
+      type: 'bot',
+      message: response.data.answer || "Sorry, I couldn't find an answer in the document.",
+      timestamp: new Date(),
+    };
+
+    setChatHistory(prev => [...prev, botMessage]);
+    setQuestion('');
+  } catch (err) {
+    const errorMessage = {
+      type: 'error',
+      message:
+        'Sorry, I encountered an error while processing your question. Please try again.',
+      timestamp: new Date(),
+    };
+    console.error('Chat error:', err);
+    setChatHistory(prev => [...prev, errorMessage]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const clearChat = () => {
     setChatHistory([]);
