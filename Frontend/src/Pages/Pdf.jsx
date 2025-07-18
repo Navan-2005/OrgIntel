@@ -177,7 +177,6 @@ function Pdf() {
       setPreviewContent('');
     }
   };
-
   const handleFileSelect = (file) => {
     setSelectedFile(file);
     // Simulate document content preview - replace with actual PDF content extraction
