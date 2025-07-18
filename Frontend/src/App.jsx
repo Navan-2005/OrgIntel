@@ -5,6 +5,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import Pdf from './Pages/Pdf'
 import Sample from './components/Sample'
+import ChatHistoryPage from './Pages/ChatHistoryPage.jsx'
 
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path='' element={<Pdf/>}/>
         <Route path='/sample' element={<Sample/>}/>
+        <Route path='/chat-history' element={<ChatHistoryPage/>}/>
       </Routes>
       </BrowserRouter>
     </div>
