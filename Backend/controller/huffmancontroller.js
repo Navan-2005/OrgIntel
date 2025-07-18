@@ -32,7 +32,8 @@ const store=async(req,res)=>{
 }
 
 const decode=async(req,res)=>{
-    const record = await Compression.findById(req.params.id);
+    const {recordId}=req.body;
+    const record = await Compression.findById(recordId);
   if (!record) return res.status(404).json({ error: "Not found" });
 
   const tree = decoder.deserializeTree(record.tree);
@@ -41,4 +42,23 @@ const decode=async(req,res)=>{
   res.json({ decoded, original: record.originalText });
 }
 
-module.exports={store,decode}
+const getallrecord = async (req, res) => {
+  const { userId } = req.body;
+  try {
+    const records = await Compression.find({ userId });
+
+    // Remove `tree` field from each document
+    const filteredRecords = records.map(record => {
+      const { tree, ...rest } = record.toObject(); // <-- Convert Mongoose doc to plain object
+      return rest;
+    });
+
+    res.status(200).json(filteredRecords);
+  } catch (error) {
+    console.log('error : ', error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+module.exports={store,decode,getallrecord}
