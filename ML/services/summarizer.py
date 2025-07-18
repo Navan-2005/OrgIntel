@@ -29,12 +29,12 @@ def save_summary(summary_text, source="nltk_manual"):
     print(f"Sumaary saved to : {filepath}")
     return filepath
 
-def generate_summary(text, num_sentence = 3, save=False, source="nltk_manual"):
+def generate_summary(text, num_sentence=3, save=False, source="nltk_manual"):
     sentences = sent_tokenize(text)
     if len(sentences) <= num_sentence:
         return text # Return full text if it's short
     
-    stop_words = set(stopwords('english'))
+    stop_words = set(stopwords.words('english'))
     word_freq = defaultdict(int)
 
     for word in word_tokenize(text.lower()):

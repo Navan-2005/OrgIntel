@@ -26,7 +26,7 @@ def summarize():
 @summarize_bp.route("/summarize-text", methods=["POST"])
 def summarize_text():
     data = request.get_json()
-    text = data.get("text")
+    text = data.get("text", "")
 
     if not text:
         return jsonify({"error": "No input text provided"}), 400
