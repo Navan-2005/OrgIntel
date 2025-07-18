@@ -4,7 +4,8 @@ import {BrowserRouter, Routes, Route} from 'react-router-dom'
 import viteLogo from '/vite.svg'
 import './App.css'
 import Pdf from './Pages/Pdf'
-import Sample from './components/Sample'
+import store from './redux/store'
+import {Provider} from 'react-redux'
 
 
 function App() {
@@ -12,12 +13,13 @@ function App() {
 
   return (
     <div>
+      <Provider store={store}>
       <BrowserRouter>
       <Routes>
         <Route path='' element={<Pdf/>}/>
-        <Route path='/sample' element={<Sample/>}/>
       </Routes>
       </BrowserRouter>
+      </Provider>
     </div>
   )
 }
