@@ -177,30 +177,38 @@ function Pdf() {
       setPreviewContent('');
     }
   };
-  const handleFileSelect = (file) => {
-    setSelectedFile(file);
-    // Simulate document content preview - replace with actual PDF content extraction
-    setPreviewContent(`Preview of ${file.name}
+//   const handleFileSelect = (file) => {
+//     setSelectedFile(file);
+//     // Simulate document content preview - replace with actual PDF content extraction
+//     setPreviewContent(`Preview of ${file.name}
 
-This is a simulated preview of the PDF content. In a real implementation, you would:
-1. Extract text content from the PDF
-2. Display the first few pages or a summary
-3. Allow users to scroll through the document
-4. Highlight relevant sections based on search queries
+// This is a simulated preview of the PDF content. In a real implementation, you would:
+// 1. Extract text content from the PDF
+// 2. Display the first few pages or a summary
+// 3. Allow users to scroll through the document
+// 4. Highlight relevant sections based on search queries
 
-Document Information:
-- File: ${file.name}
-- Size: ${formatFileSize(file.size)}
-- Pages: ${file.pages}
-- Uploaded: ${file.uploadTime.toLocaleString()}
+// Document Information:
+// - File: ${file.name}
+// - Size: ${formatFileSize(file.size)}
+// - Pages: ${file.pages}
+// - Uploaded: ${file.uploadTime.toLocaleString()}
 
-Sample Content:
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+// Sample Content:
+// Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+// Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-[This would be replaced with actual PDF content extraction in a real implementation]`);
-  };
+// [This would be replaced with actual PDF content extraction in a real implementation]`);
+//   };
+const [pdfUrl, setPdfUrl] = useState(null);
+
+const handleFileSelect = (file) => {
+  setSelectedFile(file);
+  const url = URL.createObjectURL(file.rawFile);
+  setPdfUrl(url);
+};
+
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">

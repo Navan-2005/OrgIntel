@@ -1,14 +1,23 @@
 // src/components/document-viewer/DocumentPreview.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 
-// You would likely import Document and Page from 'react-pdf' here
-// import { Document, Page } from 'react-pdf';
-// and potentially:
-// import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-// import 'react-pdf/dist/esm/Page/TextLayer.css';
+function DocumentPreview({ selectedFile }) {
+  const [pdfUrl, setPdfUrl] = useState(null);
 
-function DocumentPreview({ selectedFile, previewContent }) {
+  useEffect(() => {
+    if (selectedFile?.rawFile) {
+      const url = URL.createObjectURL(selectedFile.rawFile);
+      setPdfUrl(url);
+
+      return () => {
+        URL.revokeObjectURL(url); // Clean up blob URL
+      };
+    } else {
+      setPdfUrl(null);
+    }
+  }, [selectedFile]);
+
   if (!selectedFile) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -26,17 +35,16 @@ function DocumentPreview({ selectedFile, previewContent }) {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          {/*
-            In a real app, you would render the PDF here using react-pdf:
-            <Document file={selectedFile.url || URL.createObjectURL(selectedFile.rawFile)}>
-              <Page pageNumber={1} /> // Or dynamically render all pages
-            </Document>
-            You'd also need state for page number, zoom, etc.
-          */}
-          <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
-            {previewContent}
-          </pre>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          {pdfUrl ? (
+            <iframe
+              src={pdfUrl}
+              title="PDF Viewer"
+              className="w-full h-[80vh] rounded border"
+            />
+          ) : (
+            <p className="text-sm text-gray-500">Unable to preview PDF.</p>
+          )}
         </div>
       </div>
     </div>
