@@ -1,7 +1,6 @@
-// src/Pages/Pdf.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bot, Trash2 } from 'lucide-react';
-// Import new components
 import Header from '../components/layout/Header';
 import MainLayout from '../components/layout/MainLayout';
 import FileUploader from '../components/file-explorer/FileUploader';
@@ -13,6 +12,7 @@ import ChatInput from '../components/chat/ChatInput';
 import axios from 'axios';
 
 function Pdf() {
+  const navigate = useNavigate();
   // State management (mostly remains here as it's global to the page)
   const [files, setFiles] = useState([]); // Files selected for upload
   const [uploadedFiles, setUploadedFiles] = useState([]); // Successfully uploaded files
@@ -325,10 +325,9 @@ const handleFileSelect = (file) => {
 
 
   return (
-    <div className="h-screen bg-gray-100 flex flex-col">
+    <div className="w-screen bg-gray-100 flex flex-col">
       {/* Header Component */}
       <Header uploadedFilesCount={uploadedFiles.length} sessionId={sessionId} />
-
       {/* Main Content Area Layout */}
       <MainLayout
         fileExplorer={
@@ -371,13 +370,22 @@ const handleFileSelect = (file) => {
                     <p className="text-xs text-gray-500">Ask questions about your documents</p>
                   </div>
                 </div>
-                <button
-                  onClick={clearChat}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                  title="Clear chat"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={clearChat}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Clear chat"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => navigate('/chat-history')}
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+                    title="Go to Chat History"
+                  >
+                    Chat History
+                  </button>
+                </div>
               </div>
             </div>
             <ChatWindow chatHistory={chatHistory} loading={loading} chatEndRef={chatEndRef} />
