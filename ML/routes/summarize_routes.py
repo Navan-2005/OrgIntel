@@ -8,9 +8,10 @@ summarize_bp = Blueprint("summarizer", __name__)
 @summarize_bp.route("/api/summarize", methods=["POST"])  # ✅ Corrected: 'methods' must be lowercase
 def summarize():
     data = request.get_json()
-
+    
     # ✅ Corrected: Use data.get() instead of request.get()
     text = data.get("text", "")
+    userId=data.get("userId","")
     num_sentences = data.get("num_sentences", 3)
     save = data.get("save", False)
     source = data.get("source", "postman_input")
@@ -26,7 +27,11 @@ def summarize():
 @summarize_bp.route("/summarize-text", methods=["POST"])
 def summarize_text():
     data = request.get_json()
+<<<<<<< HEAD
     text = data.get("text", "")
+=======
+    text = data.get("text","")
+>>>>>>> 3c2a16009266659a2bf5833dafd11ecb03c9f919
 
     if not text:
         return jsonify({"error": "No input text provided"}), 400

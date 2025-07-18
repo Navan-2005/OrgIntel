@@ -1,6 +1,7 @@
 import heapq
 import collections
 
+<<<<<<< HEAD
 class Node:
     def __init__(self, char, freq):
         self.char = char
@@ -8,13 +9,29 @@ class Node:
         self.left = None
         self.right = None
     
+=======
+# Define the Node structure using namedtuple
+class Node(namedtuple("Node", ["char", "freq", "left", "right"])):
+>>>>>>> 3c2a16009266659a2bf5833dafd11ecb03c9f919
     def __lt__(self, other):
         return self.freq < other.freq
 
 class HuffmanEncoder:
+<<<<<<< HEAD
     def __init__(self):
         self.codes = {}
         self.reverse_mapping = {}
+=======
+    def freqMap(self, text):
+        freq_map = defaultdict(int)
+        for char in text:
+            freq_map[char] += 1
+        return freq_map
+
+    def huffmanTree(self, freq_map):
+        heap = [Node(char, freq, None, None) for char, freq in freq_map.items()]
+        heapq.heapify(heap)
+>>>>>>> 3c2a16009266659a2bf5833dafd11ecb03c9f919
 
     def _make_frequency_dict(self, text):
         return collections.Counter(text)
@@ -36,6 +53,7 @@ class HuffmanEncoder:
             heapq.heappush(heap, merged)
         return heap
 
+<<<<<<< HEAD
     def _make_codes_helper(self, root, current_code):
         if root is None:
             return
@@ -75,3 +93,36 @@ class HuffmanEncoder:
                 current = tree_root
 
         return decoded_text
+=======
+        return heap[0] if heap else None
+
+    def buildCodes(self, root):
+        codes = {}
+
+        def traverse(node, path):
+            if node:
+                if node.char is not None:
+                    codes[node.char] = path
+                traverse(node.left, path + "0")
+                traverse(node.right, path + "1")
+
+        traverse(root, "")
+        return codes
+
+    def encode(self, text):
+        freq_map = self.freqMap(text)
+        tree = self.huffmanTree(freq_map)
+        codes = self.buildCodes(tree)
+        encoded_text = ''.join(codes[char] for char in text)
+        return encoded_text, tree
+
+    def decode(self, encoded_text, tree):
+        result = []
+        node = tree
+        for bit in encoded_text:
+            node = node.left if bit == "0" else node.right
+            if node.char is not None:
+                result.append(node.char)
+                node = tree
+        return ''.join(result)
+>>>>>>> 3c2a16009266659a2bf5833dafd11ecb03c9f919
