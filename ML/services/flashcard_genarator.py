@@ -253,6 +253,6 @@ def summarize_audio():
 def health_check():
     return jsonify({"status": "ok"})
 
-if _name_ == '_main':  # Fixed: __name has double underscores
+if __name__ == '__main__':  # Fixed: __name has double underscores
     print("App Server will start on http://localhost:8000")
     app.run(debug=True, host='0.0.0.0', port=8000)

@@ -1,29 +1,48 @@
 from flask import Blueprint, request, jsonify
-from services.summarizer import generate_summary
+from services.summarizer import generate_summary, save_summary
 from utils.huffman import HuffmanEncoder
 
-summerizer_bp = Blueprint("summerizer", __name__)
+summarize_bp = Blueprint("summarizer", __name__)
 
-@summerizer_bp.route("/summerize-text", methods=["POST"])
-def summerize_text():
+# Route 1: Summarize text and optionally save it
+@summarize_bp.route("/api/summarize", methods=["POST"])  # ✅ Corrected: 'methods' must be lowercase
+def summarize():
+    data = request.get_json()
+
+    # ✅ Corrected: Use data.get() instead of request.get()
+    text = data.get("text", "")
+    num_sentences = data.get("num_sentences", 3)
+    save = data.get("save", False)
+    source = data.get("source", "postman_input")
+
+    summary = generate_summary(text, num_sentence=num_sentences, save=save, source=source)
+
+    if save:
+        path = save_summary(summary, source)
+        return jsonify({"summary": summary, "saved_to": path})
+    return jsonify({"summary": summary})
+
+# Route 2: Summarize and Huffman encode/decode
+@summarize_bp.route("/summarize-text", methods=["POST"])
+def summarize_text():
     data = request.get_json()
     text = data.get("text")
 
     if not text:
-        return jsonify({"error" : "No input text provided"}), 400
-    
-    # Summarize text
+        return jsonify({"error": "No input text provided"}), 400
+
+    # Generate summary
     summary = generate_summary(text)
 
-    # Huffman Encode
+    # Huffman encode
     encoder = HuffmanEncoder()
     encoded_data, tree = encoder.encode(summary)
 
-    # Huffman Decode
+    # Huffman decode
     decoded_text = encoder.decode(encoded_data, tree)
 
-    return jsonify ({
-        "original summary" : summary,
-        "compressed_binary" : encoded_data,
-        "decoded_text" : decoded_text
+    return jsonify({
+        "original_summary": summary,
+        "compressed_binary": encoded_data,
+        "decoded_text": decoded_text
     })
