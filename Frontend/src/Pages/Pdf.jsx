@@ -342,87 +342,159 @@ const handleFileSelect = (file) => {
 };
 
 
+  // Slider state for Col 1/Col 2 and Col 2/Col 3
+  const [col1Width, setCol1Width] = useState(20); // percent
+  const [col2Width, setCol2Width] = useState(40); // percent
+  const [col3Width, setCol3Width] = useState(40); // percent
+  const slider1Ref = useRef(null);
+  const slider2Ref = useRef(null);
+  const draggingRef = useRef(null);
+
+  // Drag logic for Col 1/Col 2
+  const handleSlider1MouseDown = () => {
+    draggingRef.current = 'slider1';
+    document.body.style.cursor = 'col-resize';
+  };
+  // Drag logic for Col 2/Col 3
+  const handleSlider2MouseDown = () => {
+    draggingRef.current = 'slider2';
+    document.body.style.cursor = 'col-resize';
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!draggingRef.current) return;
+      // Get total width of main area
+      const mainArea = document.getElementById('main-area');
+      if (!mainArea) return;
+      const rect = mainArea.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const totalWidth = rect.width;
+      if (draggingRef.current === 'slider1') {
+        let newCol1 = Math.max(10, Math.min(40, (x / totalWidth) * 100));
+        let newCol2 = Math.max(20, col2Width + (col1Width - newCol1));
+        let newCol3 = 100 - newCol1 - newCol2;
+        if (newCol3 < 20) {
+          newCol3 = 20;
+          newCol2 = 100 - newCol1 - newCol3;
+        }
+        setCol1Width(newCol1);
+        setCol2Width(newCol2);
+        setCol3Width(newCol3);
+      } else if (draggingRef.current === 'slider2') {
+        let newCol2 = Math.max(20, Math.min(60, (x / totalWidth) * 100 - col1Width));
+        let newCol3 = 100 - col1Width - newCol2;
+        if (newCol3 < 20) {
+          newCol3 = 20;
+          newCol2 = 100 - col1Width - newCol3;
+        }
+        setCol2Width(newCol2);
+        setCol3Width(newCol3);
+      }
+    };
+    const handleMouseUp = () => {
+      draggingRef.current = null;
+      document.body.style.cursor = '';
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [col1Width, col2Width, col3Width]);
+
   return (
     <div className="w-screen bg-gray-100 flex flex-col">
       {/* Header Component */}
       <Header uploadedFilesCount={uploadedFiles.length} sessionId={sessionId} />
-      {/* Main Content Area Layout */}
-      <MainLayout
-        fileExplorer={
-          <>
-            <FileUploader
-              files={files}
-              dragActive={dragActive}
-              handleDrag={handleDrag}
-              handleDrop={handleDrop}
-              handleFileChange={handleFileChange}
-              handleUpload={handleUpload}
-              loading={loading}
-              formatFileSize={formatFileSize}
-            />
-            <FileList
-              uploadedFiles={uploadedFiles}
-              selectedFile={selectedFile}
-              handleFileSelect={handleFileSelect}
-              removeFile={removeFile}
-              formatFileSize={formatFileSize}
-            />
-          </>
-        }
-        documentViewer={
-          <>
-            <DocumentViewerHeader selectedFile={selectedFile} formatFileSize={formatFileSize} />
-            <DocumentPreview selectedFile={selectedFile} previewContent={previewContent} />
-          </>
-        }
-        chatPanel={
-          <>
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">AI Assistant</h3>
-                    
-                  </div>
+      {/* Main Content Area Layout with two sliders */}
+      <div id="main-area" className="flex flex-row w-full h-[calc(100vh-64px)]" style={{ minHeight: '0' }}>
+        {/* Col 1: File Explorer */}
+        <div style={{ width: `${col1Width}%`, minWidth: 0 }} className="h-full flex flex-col">
+          <FileUploader
+            files={files}
+            dragActive={dragActive}
+            handleDrag={handleDrag}
+            handleDrop={handleDrop}
+            handleFileChange={handleFileChange}
+            handleUpload={handleUpload}
+            loading={loading}
+            formatFileSize={formatFileSize}
+          />
+          <FileList
+            uploadedFiles={uploadedFiles}
+            selectedFile={selectedFile}
+            handleFileSelect={handleFileSelect}
+            removeFile={removeFile}
+            formatFileSize={formatFileSize}
+          />
+        </div>
+        {/* Slider between Col 1 and Col 2 */}
+        <div
+          ref={slider1Ref}
+          onMouseDown={handleSlider1MouseDown}
+          className="w-2 cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors flex-shrink-0"
+          style={{ zIndex: 10 }}
+        />
+        {/* Col 2: Document Viewer */}
+        <div style={{ width: `${col2Width}%`, minWidth: 0 }} className="h-full flex flex-col">
+          <DocumentViewerHeader selectedFile={selectedFile} formatFileSize={formatFileSize} />
+          <DocumentPreview selectedFile={selectedFile} previewContent={previewContent} />
+        </div>
+        {/* Slider between Col 2 and Col 3 */}
+        <div
+          ref={slider2Ref}
+          onMouseDown={handleSlider2MouseDown}
+          className="w-2 cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors flex-shrink-0"
+          style={{ zIndex: 10 }}
+        />
+        {/* Col 3: Chat Panel */}
+        <div style={{ width: `${col3Width}%`, minWidth: 0 }} className="h-full flex flex-col">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex items-center space-x-2">
-                  {/* <button
-                    onClick={clearChat}
-                    className="w-24 h-9 flex items-center justify-center bg-gray-200 text-white rounded hover:bg-gray-300 text-sm font-medium transition-colors"
-                    title="Clear chat"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" /> Clear
-                  </button> */}
-                  <button
-                    onClick={send}
-                    className="w-24 h-9 flex items-center justify-center bg-green-500 text-white rounded hover:bg-green-600 text-sm font-medium transition-colors"
-                    title="Save chat history"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => window.open('/chat-history', '_blank')}
-                    className="w-24 h-9 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium transition-colors"
-                    title="Go to Chat History"
-                  >
-                    History
-                  </button>
+                <div>
+                  <h3 className="font-medium text-gray-900">AI Assistant</h3>
                 </div>
               </div>
+              <div className="flex items-center space-x-2">
+                {/* <button
+                  onClick={clearChat}
+                  className="w-24 h-9 flex items-center justify-center bg-gray-200 text-white rounded hover:bg-gray-300 text-sm font-medium transition-colors"
+                  title="Clear chat"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" /> Clear
+                </button> */}
+                <button
+                  onClick={send}
+                  className="w-24 h-9 flex items-center justify-center bg-green-500 text-white rounded hover:bg-green-600 text-sm font-medium transition-colors"
+                  title="Save chat history"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => window.open('/chat-history', '_blank')}
+                  className="w-24 h-9 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium transition-colors"
+                  title="Go to Chat History"
+                >
+                  History
+                </button>
+              </div>
             </div>
-            <ChatWindow chatHistory={chatHistory} loading={loading} chatEndRef={chatEndRef} />
-            <ChatInput
-              question={question}
-              setQuestion={setQuestion}
-              handleSubmit={handleSubmit}
-              loading={loading}
-            />
-          </>
-        }
-      />
+          </div>
+          <ChatWindow chatHistory={chatHistory} loading={loading} chatEndRef={chatEndRef} />
+          <ChatInput
+            question={question}
+            setQuestion={setQuestion}
+            handleSubmit={handleSubmit}
+            loading={loading}
+          />
+        </div>
+      </div>
     </div>
   );
 }
