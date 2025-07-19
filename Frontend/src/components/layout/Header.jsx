@@ -11,8 +11,8 @@ function Header({ uploadedFilesCount, sessionId }) {
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">PDF Document Analyzer</h1>
-              <p className="text-sm text-gray-500">Upload and analyze PDF documents with AI assistance</p>
+              <h1 className="text-lg font-semibold text-gray-900">DocuMind</h1>
+              <p className="text-sm text-gray-500">An assistance for your Docs</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
