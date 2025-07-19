@@ -404,7 +404,7 @@ const handleFileSelect = (file) => {
                     Save
                   </button>
                   <button
-                    onClick={() => navigate('/chat-history')}
+                    onClick={() => window.open('/chat-history', '_blank')}
                     className="w-24 h-9 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium transition-colors"
                     title="Go to Chat History"
                   >
