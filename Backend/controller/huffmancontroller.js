@@ -49,7 +49,7 @@ const getallrecord = async (req, res) => {
 
     // Remove `tree` field from each document
     const filteredRecords = records.map(record => {
-      const { tree, ...rest } = record.toObject(); // <-- Convert Mongoose doc to plain object
+      const { tree,binary, ...rest } = record.toObject(); // <-- Convert Mongoose doc to plain object
       return rest;
     });
 

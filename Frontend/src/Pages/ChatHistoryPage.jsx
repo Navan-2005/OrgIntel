@@ -1,41 +1,44 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const dummyChats = [
-  {
-    id: 1,
-    name: 'PDF Upload & Analysis',
-    details: 'Feature: Users can upload PDF documents for analysis.\n\nDiscussion: Implemented drag-and-drop and file selection. Used axios for backend communication.\n\nNext Steps: Improve file validation and error handling.'
-  },
-  {
-    id: 2,
-    name: 'AI Chatbot Integration',
-    details: 'Feature: Integrated AI assistant for document Q&A.\n\nDiscussion: Utilized ChatWindow and ChatInput components. Backend uses ML/app.py for summarization and flashcard generation.\n\nNext Steps: Enhance response accuracy and add chat history persistence.'
-  },
-  {
-    id: 3,
-    name: 'Frontend Layout',
-    details: 'Feature: Modern UI with full-screen layout, draggable resizer between PDF viewer and chat.\n\nDiscussion: Used Tailwind CSS and React flexbox.\n\nNext Steps: Polish responsive design and accessibility.'
-  },
-  {
-    id: 4,
-    name: 'Flashcard Generator',
-    details: 'Feature: Generate flashcards from PDF content.\n\nDiscussion: ML/services/flashcard_genarator.py processes text and returns flashcards.\n\nNext Steps: Improve NLP extraction and UI display.'
-  },
-  {
-    id: 5,
-    name: 'Summarization Service',
-    details: 'Feature: Summarize uploaded documents.\n\nDiscussion: ML/services/summarizer.py provides summary endpoints.\n\nNext Steps: Add multi-language support and summary export.'
-  },
-];
+import axios from 'axios';
+import { useSelector } from 'react-redux';
 
 function ChatHistoryPage() {
-  const [selectedChatId, setSelectedChatId] = useState(dummyChats[0].id);
-  const selectedChat = dummyChats.find(chat => chat.id === selectedChatId);
+  const { user } = useSelector(state => state.user);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
   const navigate = useNavigate();
+
+  // Fetch chat history from backend
+  const getChatHistory = async () => {
+    try {
+      const response = await axios.post('http://localhost:3000/huffman/getallrecord', {
+        userId: user._id
+      });
+      setChatHistory(response.data);
+    } catch (error) {
+      console.log('Error getting chat history:', error);
+    }
+  };
+
+  // Decode selected chat
+  const showChat = async (recordId) => {
+    try {
+      const response = await axios.post('http://localhost:3000/huffman/decode', { recordId });
+      const { decoded, original } = response.data;
+      setSelectedChat({ decoded, original });
+    } catch (error) {
+      console.log('Error decoding chat:', error);
+    }
+  };
+
+  useEffect(() => {
+    getChatHistory();
+  }, []);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      {/* Header */}
       <div className="p-4 border-b border-gray-300 flex items-center justify-between">
         <h1 className="text-xl font-bold">Chat History</h1>
         <button
@@ -45,29 +48,35 @@ function ChatHistoryPage() {
           Back to PDF Page
         </button>
       </div>
+
+      {/* Main content */}
       <div className="flex flex-1">
-        {/* Column 1: Chat Names */}
+        {/* Left column: Chat list */}
         <div className="w-1/3 border-r border-gray-300 p-4 overflow-y-auto bg-gradient-to-b from-blue-50 to-white">
           <h2 className="text-lg font-semibold mb-4 text-blue-700">Project Chats</h2>
           <ul>
-            {dummyChats.map(chat => (
+            {chatHistory.map(chat => (
               <li
-                key={chat.id}
-                className={`cursor-pointer p-3 rounded mb-3 text-base font-semibold transition-all duration-150 shadow-sm border ${selectedChatId === chat.id ? 'bg-blue-200 text-blue-900 border-blue-400' : 'hover:bg-blue-100 text-gray-900 border-gray-200'}`}
-                onClick={() => setSelectedChatId(chat.id)}
+                key={chat._id}
+                className="cursor-pointer p-3 rounded mb-3 text-base font-semibold transition-all duration-150 shadow-sm border hover:bg-blue-100 text-gray-900 border-gray-200"
+                onClick={() => showChat(chat._id)}
               >
-                <span className="block truncate">{chat.name}</span>
+                <span className="block truncate">{chat.originalText}</span>
               </li>
             ))}
           </ul>
         </div>
-        {/* Column 2: Selected Chat Details */}
+
+        {/* Right column: Selected chat details */}
         <div className="w-2/3 p-8 overflow-y-auto bg-white flex flex-col justify-center items-center">
           <h2 className="text-lg font-semibold mb-4 text-blue-700">Details</h2>
           {selectedChat ? (
             <div className="w-full max-w-2xl bg-blue-50 rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-bold mb-3 text-blue-800 border-b border-blue-200 pb-2">{selectedChat.name}</h3>
-              <pre className="text-gray-900 whitespace-pre-wrap leading-relaxed">{selectedChat.details}</pre>
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">Chat</h3>
+              <p className="text-gray-800 mb-4 whitespace-pre-wrap">{selectedChat.original}</p>
+
+              {/* <h3 className="text-lg font-semibold text-blue-800 mb-2">Decoded Result</h3>
+              <p className="text-gray-900 whitespace-pre-wrap">{selectedChat.decoded}</p> */}
             </div>
           ) : (
             <p className="text-gray-800">Select a chat to view details.</p>
