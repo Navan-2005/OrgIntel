@@ -26,16 +26,20 @@ function Pdf() {
   const [dragActive, setDragActive] = useState(false); // Drag/drop state for file uploader
   const [selectedFile, setSelectedFile] = useState(null); // Currently selected file for preview
   const [previewContent, setPreviewContent] = useState(''); // Simulated preview content
-  const send =async()=>{
+  const send = async () => {
     try {
+      // Convert chatHistory array to text format
+      const chatText = chatHistory.map(msg => {
+        const time = msg.timestamp instanceof Date ? msg.timestamp.toLocaleTimeString() : msg.timestamp;
+        return `[${msg.type.toUpperCase()} @ ${time}]: ${msg.message}`;
+      }).join('\n');
       const response = await axios.post('http://localhost:3000/huffman/encode', {
-        text:chatHistory,
-        userId: user.id,}) // Assuming user ID is needed for context
-        console.log('Chat response:', response.data);
-        
+        text: chatText,
+        userId: user.id,
+      });
+      console.log('Chat response:', response.data);
     } catch (error) {
       console.log('Chat error:', error);
-      
     }
   }
   
