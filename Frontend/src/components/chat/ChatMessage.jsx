@@ -23,7 +23,7 @@ function ChatMessage({ message }) {
         <div
           className={`px-3 py-2 rounded-lg text-sm ${
             isUser
-              ? 'bg-blue-500 text-white'
+              ? 'bg-blue-500 text-black'
               : isError
               ? 'bg-red-50 text-red-700 border border-red-200'
               : 'bg-gray-100 text-gray-800'
