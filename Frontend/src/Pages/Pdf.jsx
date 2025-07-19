@@ -385,17 +385,17 @@ const handleFileSelect = (file) => {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">AI Assistant</h3>
-                    <p className="text-xs text-gray-500">Ask questions about your documents</p>
+                    
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button
+                  {/* <button
                     onClick={clearChat}
                     className="w-24 h-9 flex items-center justify-center bg-gray-200 text-white rounded hover:bg-gray-300 text-sm font-medium transition-colors"
                     title="Clear chat"
                   >
                     <Trash2 className="w-4 h-4 mr-1" /> Clear
-                  </button>
+                  </button> */}
                   <button
                     onClick={send}
                     className="w-24 h-9 flex items-center justify-center bg-green-500 text-white rounded hover:bg-green-600 text-sm font-medium transition-colors"
