@@ -391,24 +391,24 @@ const handleFileSelect = (file) => {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={clearChat}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="w-24 h-9 flex items-center justify-center bg-gray-200 text-white rounded hover:bg-gray-300 text-sm font-medium transition-colors"
                     title="Clear chat"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 mr-1" /> Clear
                   </button>
                   <button
                     onClick={send}
-                    className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm"
+                    className="w-24 h-9 flex items-center justify-center bg-green-500 text-white rounded hover:bg-green-600 text-sm font-medium transition-colors"
                     title="Save chat history"
                   >
                     Save
                   </button>
                   <button
                     onClick={() => navigate('/chat-history')}
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+                    className="w-24 h-9 flex items-center justify-center bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium transition-colors"
                     title="Go to Chat History"
                   >
-                    Chat History
+                    History
                   </button>
                 </div>
               </div>
