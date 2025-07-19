@@ -35,7 +35,7 @@ function Pdf() {
       }).join('\n');
       const response = await axios.post('http://localhost:3000/huffman/encode', {
         text: chatText,
-        userId: user.id,
+        userId: '687aa9b887f6c83551ae3764',
       });
       console.log('Chat response:', response.data);
     } catch (error) {
