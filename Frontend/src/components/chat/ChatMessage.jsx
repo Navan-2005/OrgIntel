@@ -1,7 +1,6 @@
 // src/components/chat/ChatMessage.jsx
 import React from 'react';
 import { Bot, User } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 
 function ChatMessage({ message }) {
   const isUser = message.type === 'user';
@@ -24,18 +23,13 @@ function ChatMessage({ message }) {
         <div
           className={`px-3 py-2 rounded-lg text-sm ${
             isUser
-              ? 'bg-blue-500 text-white'
+              ? 'bg-blue-500 text-black'
               : isError
               ? 'bg-red-50 text-red-700 border border-red-200'
               : 'bg-gray-100 text-gray-800'
           }`}
         >
-          {/* Use markdown for bot output, plain for user */}
-          {isUser ? (
-            <div className="whitespace-pre-wrap">{message.message}</div>
-          ) : (
-            <ReactMarkdown className="prose prose-sm max-w-xs whitespace-pre-wrap">{message.message}</ReactMarkdown>
-          )}
+          <div className="whitespace-pre-wrap">{message.message}</div>
           <div className={`text-xs mt-1 ${
             isUser ? 'text-blue-100' : 'text-gray-500'
           }`}>
