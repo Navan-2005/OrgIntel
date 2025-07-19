@@ -9,11 +9,13 @@ import DocumentViewerHeader from '../components/document-viewer/DocumentViewerHe
 import DocumentPreview from '../components/document-viewer/DocumentPreview';
 import ChatWindow from '../components/chat/ChatWindow';
 import ChatInput from '../components/chat/ChatInput';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
 
 function Pdf() {
   const navigate = useNavigate();
   // State management (mostly remains here as it's global to the page)
+  const{user}= useSelector((state) => state.user);
   const [files, setFiles] = useState([]); // Files selected for upload
   const [uploadedFiles, setUploadedFiles] = useState([]); // Successfully uploaded files
   const [question, setQuestion] = useState(''); // Current chat input
@@ -24,6 +26,18 @@ function Pdf() {
   const [dragActive, setDragActive] = useState(false); // Drag/drop state for file uploader
   const [selectedFile, setSelectedFile] = useState(null); // Currently selected file for preview
   const [previewContent, setPreviewContent] = useState(''); // Simulated preview content
+  const send =async()=>{
+    try {
+      const response = await axios.post('http://localhost:3000/huffman/encode', {
+        text:chatHistory,
+        userId: user.id,}) // Assuming user ID is needed for context
+        console.log('Chat response:', response.data);
+        
+    } catch (error) {
+      console.log('Chat error:', error);
+      
+    }
+  }
   
   const chatEndRef = useRef(null); // Ref for auto-scrolling chat
 
@@ -377,6 +391,13 @@ const handleFileSelect = (file) => {
                     title="Clear chat"
                   >
                     <Trash2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={send}
+                    className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm"
+                    title="Save chat history"
+                  >
+                    Save
                   </button>
                   <button
                     onClick={() => navigate('/chat-history')}
