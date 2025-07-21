@@ -25,3 +25,39 @@
 - ✅ Export mind maps to Notion/Markdown
 - ✅ Offline PDF summarization using WASM
 - ✅ Grammarly-style AI suggestions
+
+  ## 🛠️ Tech Stack
+
+### 🌐 Frontend
+
+- **React.js ** (App Router)
+- **Tailwind CSS** + **Shadcn UI**
+- `react-pdf` for viewing PDFs
+- `React Flow` for mind maps
+- `react-speech-recognition` for voice input
+- `Socket.IO` for live collaboration
+
+### 🧠 AI & NLP
+
+- Google Gemini for summarization & QA
+- LangChain  document agents
+- Whisper for speech-to-text
+- Embedding generation via Gemini
+- Vector DB: **Chroma**
+
+### ⚙️ Backend
+
+-  **Node.js** (Express)
+- PDF processing via `pdf-parser` 
+
+### 🗃️ Storage
+
+- Vector store (ChromaDB )
+- Document & user storage: MongoDB 
+
+---
+
+## 📦 Compression (Advanced)
+
+- Huffman Coding (educational)
+
