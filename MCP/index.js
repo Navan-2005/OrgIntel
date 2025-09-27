@@ -131,6 +131,6 @@ app.post("/messages", async (req, res) => {
     }
 });
 
-app.listen(3001, () => {
+app.listen('10.92.57.181', () => {
     console.log("✅ MCP Server is running on http://localhost:3001");
 });

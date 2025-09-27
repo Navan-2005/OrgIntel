@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ChatSidebar } from "@/components/ChatSidebar";
-import { ChatInterface } from "@/components/ChatInterface";
+import ChatInterface from '@/components/ChatInterface';
 import { DocumentsPanel } from "@/components/DocumentsPanel";
 import { Button } from "@/components/ui/button";
 import { Menu, PanelRight, PanelLeft } from "lucide-react";
@@ -13,6 +13,28 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+  
+  // State to manage uploaded documents
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+
+  // Handle file upload from ChatInterface
+  const handleFileUpload = (uploadedFiles: any[]) => {
+    setDocuments(prev => [...prev, ...uploadedFiles]);
+  };
+
+  // Handle file removal from ChatInterface or DocumentsPanel
+  const handleFileRemove = (id: string) => {
+    setDocuments(prev => prev.filter(doc => doc.id !== id));
+    if (selectedDocumentId === id) {
+      setSelectedDocumentId(null);
+    }
+  };
+
+  // Handle document preview
+  const handlePreviewDocument = (id: string) => {
+    setSelectedDocumentId(id);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -55,13 +77,21 @@ const Layout = ({ children }: LayoutProps) => {
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col">
-              {children || <ChatInterface />}
+              {children || (
+                <ChatInterface 
+                  onFileUpload={handleFileUpload}
+                  onFileRemove={handleFileRemove}
+                />
+              )}
             </main>
 
             {/* Right Sidebar - Documents */}
             <DocumentsPanel 
               collapsed={rightSidebarCollapsed} 
               onToggle={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+              onRemoveDocument={handleFileRemove}
+              onPreviewDocument={handlePreviewDocument}
+              selectedDocumentId={selectedDocumentId}
             />
           </div>
         </div>
