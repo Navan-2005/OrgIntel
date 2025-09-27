@@ -1,5 +1,8 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Eye, EyeOff, User, Mail, Lock, LogIn, UserPlus, Code2, GraduationCap } from 'lucide-react';
+import {useSelector,useDispatch} from 'react-redux';
+import axios from 'axios'
+import { loginUser } from '../redux/slices/authSlice';
 
 // Type definitions
 interface FormData {
@@ -37,6 +40,7 @@ interface SignupResponse {
 }
 
 const LoginSignup: React.FC = () => {
+  const dispatch=useDispatch();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -108,23 +112,34 @@ const LoginSignup: React.FC = () => {
     setMessage('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // const response = await fetch(`${API_BASE_URL}/login`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     email: formData.email,
+      //     password: formData.password
+      //   })
+      // });
+
+      const response=await axios.post('http://localhost:3000/users/login',
+        {
           email: formData.email,
-          password: formData.password
-        })
-      });
+          password: formData.password,
+          role: formData.role
+        }
+      )
 
-      const data: LoginResponse = await response.json();
 
-      if (response.ok) {
+
+      // const data: LoginResponse = await response.json();
+
+      if (response) {
         // Store token and user data including role
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        // dispatch(loginUser({ email, password }));
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', response.data.user);
         setMessage('Login successful!');
         
         // Redirect to chat after 1.5s
@@ -132,7 +147,7 @@ const LoginSignup: React.FC = () => {
           window.location.href = '/';
         }, 1500);
       } else {
-        setMessage(data.error || 'Login failed');
+        setMessage( 'Login failed');
       }
     } catch (error) {
       setMessage('Network error. Please try again.');
@@ -174,7 +189,7 @@ const LoginSignup: React.FC = () => {
           setMessage('');
         }, 2000);
       } else {
-        setMessage(data.error || 'Signup failed');
+        setMessage('Signup failed');
       }
     } catch (error) {
       setMessage('Network error. Please try again.');

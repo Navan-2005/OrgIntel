@@ -311,6 +311,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onFileUpload,
   onFileRemove,
 }) => {
+  const {user}=localStorage.getItem('user')
+  console.log('User : ',User);
+  
   // Chat state
   const [question, setQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);

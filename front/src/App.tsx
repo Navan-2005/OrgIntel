@@ -6,11 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-<<<<<<< HEAD
-import store from './Redux/store'
-=======
+import store from './redux/store'
 import LoginSignup from "./pages/Logsin";
->>>>>>> 3e087844673385a584fc2c988ba230831948189d
 
 const queryClient = new QueryClient();
 
