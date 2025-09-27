@@ -276,7 +276,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, MessageSquare, Zap, X, Eye, File, RotateCcw } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { initializeSocket,receiveMessage,sendMessage } from '../config/socket';
+import { initializeSocket, receiveMessage, sendMessage } from '../config/socket';
 import axios from 'axios';
 
 // Types
@@ -534,10 +534,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     initializeSocket('local');
     console.log('socket initialized');
-  })
+  }, []);
 
   const removeFile = (fileId: string) => {
     setUploadedFiles(prev => {
@@ -559,10 +559,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
+  // ✅ Updated handleSubmit: only enforce PDF in 'chat' mode
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!filesUploaded) {
+
+    // 🔒 Only require PDF in 'chat' mode
+    if (mode === 'chat' && !filesUploaded) {
       const errorMessage: ChatMessage = {
         type: 'bot',
         message: 'Please upload PDF files first before asking questions.',
@@ -572,16 +574,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       return;
     }
 
-  if (!question.trim()) return;
+    if (!question.trim()) return;
 
-  const userMessage: ChatMessage = {
-    type: 'user',
-    message: question,
-    timestamp: new Date(),
-  };
-  setChatHistory((prev) => [...prev, userMessage]);
-  setQuestion('');
-  setLoading(true);
+    const userMessage: ChatMessage = {
+      type: 'user',
+      message: question,
+      timestamp: new Date(),
+    };
+    setChatHistory((prev) => [...prev, userMessage]);
+    setQuestion('');
+    setLoading(true);
 
     try {
       let response;
@@ -599,27 +601,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         });
       }
 
-    const botMessage: ChatMessage = {
-      type: 'bot',
-      message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
-      timestamp: new Date(),
-    };
-    setChatHistory((prev) => [...prev, botMessage]);
+      const botMessage: ChatMessage = {
+        type: 'bot',
+        message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
+        timestamp: new Date(),
+      };
+      setChatHistory((prev) => [...prev, botMessage]);
 
-  } catch (err: any) {
-    console.error('Chat error:', err);
-    const errorMessage: ChatMessage = {
-      type: 'error',
-      message: mode === 'mcp'
-        ? 'MCP server error. Please try again.'
-        : 'Sorry, I encountered an error. Please try again.',
-      timestamp: new Date(),
-    };
-    setChatHistory((prev) => [...prev, errorMessage]);
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err: any) {
+      console.error('Chat error:', err);
+      const errorMessage: ChatMessage = {
+        type: 'error',
+        message: mode === 'mcp'
+          ? 'MCP server error. Please try again.'
+          : 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date(),
+      };
+      setChatHistory((prev) => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const clearChat = () => {
     setChatHistory([]);
@@ -734,7 +736,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <span className="text-sm text-muted-foreground max-w-md text-right">
             {mode === 'chat' 
               ? 'Ask questions about your documents with AI' 
-              : 'Connect to MCP server for specialized processing'}
+              : 'Send any request to the MCP server (no document required).'}
           </span>
         </div>
       </div>
@@ -760,14 +762,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
               {mode === 'chat' 
                 ? 'Upload PDF documents and start asking questions about their content.' 
-                : 'Upload documents and send requests to the MCP server for specialized processing.'}
+                : 'Send any request to the MCP server (no document required).'}
             </p>
-            {!user || userRole !== 'junior' ? (
+            {/* ✅ Only show upload hint in 'chat' mode and for non-junior */}
+            {mode === 'chat' && (!user || userRole !== 'junior') && (
               <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-muted-foreground">
                 <Upload className="w-3 h-3" />
                 <span>Drag & drop PDF files or click the upload button</span>
               </div>
-            ) : (
+            )}
+            {mode === 'chat' && userRole === 'junior' && (
               <div className="mt-4 text-xs text-muted-foreground">
                 Contact a senior user to upload documents.
               </div>
@@ -946,8 +950,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               disabled={loading}
             />
             <div className="absolute right-3 bottom-3 flex space-x-2">
-              {/* 🔒 Only show upload button if NOT junior */}
-              {userRole !== 'junior' && (
+              {/* 🔒 Only show upload button if NOT junior AND in 'chat' mode */}
+              {mode === 'chat' && userRole !== 'junior' && (
                 <button
                   type="button"
                   onClick={triggerFileInput}
@@ -992,8 +996,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       </div>
 
-      {/* Drag and Drop Overlay — only for non-junior */}
-      {dragActive && userRole !== 'junior' && (
+      {/* Drag and Drop Overlay — only for non-junior AND in 'chat' mode */}
+      {mode === 'chat' && dragActive && userRole !== 'junior' && (
         <div
           className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-xl z-10 flex items-center justify-center backdrop-blur-sm"
           onDragEnter={handleDrag}
