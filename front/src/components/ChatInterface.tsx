@@ -1,289 +1,47 @@
-// import { useState } from "react";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { ScrollArea } from "@/components/ui/scroll-area";
-// import { Badge } from "@/components/ui/badge";
-// import { 
-//   Send, 
-//   Paperclip, 
-//   Bot, 
-//   User, 
-//   FileText,
-//   BookOpen,
-//   RotateCcw,
-//   ChevronDown,
-//   ChevronUp
-// } from "lucide-react";
-// import { SummaryBlock } from "@/components/blocks/SummaryBlock";
-// import { FlashcardsBlock } from "@/components/blocks/FlashcardsBlock";
-// import { DocumentPreview } from "@/components/blocks/DocumentPreview";
-
-// interface Message {
-//   id: string;
-//   type: "user" | "assistant" | "block";
-//   content: string;
-//   timestamp: Date;
-//   blockType?: "summary" | "flashcards" | "document";
-//   blockData?: any;
-// }
-
-// export const ChatInterface = () => {
-//   const [messages, setMessages] = useState<Message[]>([
-//     {
-//       id: "1",
-//       type: "user",
-//       content: "I've uploaded my research paper on AI ethics. Can you help me understand it?",
-//       timestamp: new Date(Date.now() - 10 * 60 * 1000)
-//     },
-//     {
-//       id: "2",
-//       type: "block",
-//       content: "",
-//       timestamp: new Date(Date.now() - 9 * 60 * 1000),
-//       blockType: "document",
-//       blockData: {
-//         title: "AI Ethics and Bias Detection in Machine Learning Systems",
-//         pages: 42,
-//         fileType: "PDF",
-//         uploadedAt: new Date(Date.now() - 9 * 60 * 1000)
-//       }
-//     },
-//     {
-//       id: "3",
-//       type: "assistant", 
-//       content: "I've processed your research paper! It's a comprehensive 42-page study on AI ethics and bias detection. I can help you in several ways:",
-//       timestamp: new Date(Date.now() - 9 * 60 * 1000)
-//     },
-//     {
-//       id: "4",
-//       type: "user",
-//       content: "Please create a summary of the key findings",
-//       timestamp: new Date(Date.now() - 8 * 60 * 1000)
-//     },
-//     {
-//       id: "5",
-//       type: "block",
-//       content: "",
-//       timestamp: new Date(Date.now() - 7 * 60 * 1000),
-//       blockType: "summary",
-//       blockData: {
-//         title: "AI Ethics Research - Key Findings",
-//         tldr: "The paper identifies three major sources of bias in ML systems: data bias, algorithmic bias, and deployment bias. It proposes a framework for detecting and mitigating these biases throughout the ML lifecycle.",
-//         sections: [
-//           {
-//             title: "Introduction & Problem Statement",
-//             content: "AI systems increasingly impact critical decisions in healthcare, finance, and criminal justice. However, these systems often perpetuate or amplify existing societal biases, leading to unfair outcomes for marginalized groups."
-//           },
-//           {
-//             title: "Types of Bias Identified", 
-//             content: "1. Data Bias: Underrepresentation in training data\n2. Algorithmic Bias: Inherent model assumptions\n3. Deployment Bias: Context-specific implementation issues"
-//           },
-//           {
-//             title: "Proposed Detection Framework",
-//             content: "A three-stage approach: pre-processing bias detection, in-training monitoring, and post-deployment auditing. Includes statistical tests and fairness metrics."
-//           },
-//           {
-//             title: "Case Studies",
-//             content: "Analysis of bias in hiring algorithms, medical diagnosis systems, and loan approval processes. Shows 15-30% improvement in fairness metrics when framework is applied."
-//           }
-//         ]
-//       }
-//     },
-//     {
-//       id: "6",
-//       type: "user",
-//       content: "This is great! Can you also create flashcards to help me study these concepts?",
-//       timestamp: new Date(Date.now() - 5 * 60 * 1000)
-//     },
-//     {
-//       id: "7",
-//       type: "block",
-//       content: "",
-//       timestamp: new Date(Date.now() - 4 * 60 * 1000),
-//       blockType: "flashcards",
-//       blockData: {
-//         title: "AI Ethics & Bias Detection - Study Cards",
-//         totalCount: 8,
-//         flashcards: [
-//           {
-//             id: "1",
-//             question: "What are the three main types of bias identified in ML systems?",
-//             answer: "Data bias (underrepresentation in training data), Algorithmic bias (inherent model assumptions), and Deployment bias (context-specific implementation issues).",
-//             category: "Bias Types"
-//           },
-//           {
-//             id: "2", 
-//             question: "What is the three-stage bias detection framework proposed in the paper?",
-//             answer: "Pre-processing bias detection, in-training monitoring, and post-deployment auditing with statistical tests and fairness metrics.",
-//             category: "Detection Framework"
-//           },
-//           {
-//             id: "3",
-//             question: "Which domains showed the most bias issues in the case studies?",
-//             answer: "Hiring algorithms, medical diagnosis systems, and loan approval processes were the primary domains analyzed.",
-//             category: "Case Studies"
-//           },
-//           {
-//             id: "4",
-//             question: "What improvement in fairness metrics was observed when applying the framework?",
-//             answer: "15-30% improvement in fairness metrics across different applications and use cases.",
-//             category: "Results"
-//           },
-//           {
-//             id: "5",
-//             question: "Why do AI systems perpetuate societal biases?",
-//             answer: "They often amplify existing biases present in training data or inherit assumptions from algorithmic design, leading to unfair outcomes for marginalized groups.",
-//             category: "Core Problems"
-//           }
-//         ]
-//       }
-//     }
-//   ]);
-
-//   const [inputValue, setInputValue] = useState("");
-
-//   const handleSendMessage = () => {
-//     if (!inputValue.trim()) return;
-
-//     const newMessage: Message = {
-//       id: Date.now().toString(),
-//       type: "user",
-//       content: inputValue,
-//       timestamp: new Date()
-//     };
-
-//     setMessages([...messages, newMessage]);
-//     setInputValue("");
-
-//     // Simulate AI response
-//     setTimeout(() => {
-//       const aiResponse: Message = {
-//         id: (Date.now() + 1).toString(),
-//         type: "assistant", 
-//         content: "I'd be happy to help you with that! Let me analyze your request and provide a detailed response.",
-//         timestamp: new Date()
-//       };
-//       setMessages(prev => [...prev, aiResponse]);
-//     }, 1000);
-//   };
-
-//   const formatTimestamp = (date: Date) => {
-//     const now = new Date();
-//     const diffMs = now.getTime() - date.getTime();
-//     const diffMins = Math.floor(diffMs / (1000 * 60));
-    
-//     if (diffMins < 1) return "Just now";
-//     if (diffMins < 60) return `${diffMins}m ago`;
-//     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-//     return date.toLocaleDateString();
-//   };
-
-//   const renderMessage = (message: Message) => {
-//     if (message.type === "block") {
-//       switch (message.blockType) {
-//         case "document":
-//           return <DocumentPreview key={message.id} data={message.blockData} />;
-//         case "summary":
-//           return <SummaryBlock key={message.id} data={message.blockData} />;
-//         case "flashcards":
-//           return <FlashcardsBlock key={message.id} data={message.blockData} />;
-//         default:
-//           return null;
-//       }
-//     }
-
-//     const isUser = message.type === "user";
-    
-//     return (
-//       <div 
-//         key={message.id}
-//         className={`flex gap-3 animate-fade-in ${isUser ? 'justify-end' : 'justify-start'}`}
-//       >
-//         {!isUser && (
-//           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center">
-//             <Bot className="h-4 w-4 text-white" />
-//           </div>
-//         )}
-        
-//         <div className={`
-//           max-w-[80%] rounded-lg px-4 py-3 
-//           ${isUser 
-//             ? 'chat-bubble-user text-white' 
-//             : 'chat-bubble-assistant'
-//           }
-//         `}>
-//           <p className="text-sm leading-relaxed">{message.content}</p>
-//           <div className={`text-xs mt-2 ${isUser ? 'text-white/70' : 'text-muted-foreground'}`}>
-//             {formatTimestamp(message.timestamp)}
-//           </div>
-//         </div>
-
-//         {isUser && (
-//           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-//             <User className="h-4 w-4 text-muted-foreground" />
-//           </div>
-//         )}
-//       </div>
-//     );
-//   };
-
-//   return (
-//     <div className="flex flex-col h-full bg-chat-background">
-//       {/* Chat Messages */}
-//       <ScrollArea className="flex-1 p-6">
-//         <div className="max-w-4xl mx-auto space-y-6">
-//           {messages.map(renderMessage)}
-//         </div>
-//       </ScrollArea>
-
-//       {/* Input Area */}
-//       <div className="border-t border-card-border bg-background p-4">
-//         <div className="max-w-4xl mx-auto">
-//           <div className="flex items-center gap-3">
-//             <Button variant="outline" size="icon">
-//               <Paperclip className="h-4 w-4" />
-//             </Button>
-            
-//             <div className="flex-1 relative">
-//               <Input
-//                 value={inputValue}
-//                 onChange={(e) => setInputValue(e.target.value)}
-//                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-//                 placeholder="Ask about your documents..."
-//                 className="pr-12"
-//               />
-//               <Button
-//                 onClick={handleSendMessage}
-//                 disabled={!inputValue.trim()}
-//                 size="icon"
-//                 className="absolute right-1 top-1 h-8 w-8"
-//               >
-//                 <Send className="h-3 w-3" />
-//               </Button>
-//             </div>
-//           </div>
-          
-//           <div className="flex items-center gap-2 mt-3">
-//             <Badge variant="outline" className="text-xs">
-//               Tip: Upload PDFs by clicking the paperclip or dragging files here
-//             </Badge>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, MessageSquare, Zap, X, Eye, File, RotateCcw } from 'lucide-react';
+import {
+  Send,
+  Bot,
+  MessageCircle,
+  Upload,
+  Trash2,
+  FileText,
+  User,
+  Settings,
+  CheckCircle,
+  MessageSquare,
+  Zap,
+  X,
+  Eye,
+  File,
+  Users,
+  Wifi,
+  WifiOff,
+  Hash,
+  Copy,
+  Link,
+} from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { initializeSocket, receiveMessage, sendMessage } from '../config/socket';
+import {
+  initializeSocket,
+  receiveMessage,
+  sendMessage,
+  removeListener,
+  disconnectSocket,
+  isConnected,
+} from '../config/socket';
 import axios from 'axios';
 
 // Types
 interface ChatMessage {
-  type: 'user' | 'bot' | 'error' | 'system';
+  id: string;
+  type: 'user' | 'ai' | 'system' | 'error';
   message: string;
   timestamp: Date;
+  sender?: {
+    _id: string;
+    email: string;
+  };
 }
 
 interface UploadedFile {
@@ -308,15 +66,32 @@ interface ChatInterfaceProps {
   onFileRemove: (id: string) => void;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({
-  onFileUpload,
-  onFileRemove,
-}) => {
+const generateRoomId = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+};
+
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ onFileUpload, onFileRemove }) => {
   const { user } = useSelector((state: any) => state.user);
-  const userRole = user?.role; // e.g., 'junior' or 'senior'
+  const userRole = user?.role;
+  const userEmail = user?.email || `User-${Date.now()}`;
+
+  // Room state
+  const [roomId, setRoomId] = useState<string>('');
+  const [joinRoomInput, setJoinRoomInput] = useState('');
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Mode state
+  const [mode, setMode] = useState<'chat' | 'mcp'>('chat');
+
+  // Socket state
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [userCount, setUserCount] = useState(0);
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Chat state
-  const [question, setQuestion] = useState('');
+  const [message, setMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
@@ -324,7 +99,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>(AVAILABLE_MODELS[0].id);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
-  const [mode, setMode] = useState<'chat' | 'mcp'>('chat');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
 
@@ -333,6 +107,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadedFileNamesRef = useRef<Set<string>>(new Set());
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize session
   useEffect(() => {
@@ -340,53 +115,147 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setSessionId(newSessionId);
   }, []);
 
-  // Load chat history from localStorage when mode changes
+  // Load chat history from localStorage (per mode + room)
   useEffect(() => {
-    const loadChatHistory = () => {
-      const savedHistory = localStorage.getItem(`chatHistory_${mode}`);
-      if (savedHistory) {
-        try {
-          const parsedHistory = JSON.parse(savedHistory);
-          const historyWithDates = parsedHistory.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          }));
-          setChatHistory(historyWithDates);
-        } catch (e) {
-          console.error('Failed to parse chat history from localStorage', e);
-          setChatHistory([]);
-        }
-      } else {
+    const key = roomId ? `chatHistory_${mode}_${roomId}` : `chatHistory_${mode}_default`;
+    const savedHistory = localStorage.getItem(key);
+    if (savedHistory) {
+      try {
+        const parsedHistory = JSON.parse(savedHistory);
+        const historyWithDates = parsedHistory.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+        setChatHistory(historyWithDates);
+      } catch (e) {
+        console.error('Failed to parse chat history', e);
         setChatHistory([]);
       }
-    };
-    loadChatHistory();
-  }, [mode]);
+    } else {
+      setChatHistory([]);
+    }
+  }, [mode, roomId]);
 
-  // Save chat history to localStorage whenever it changes
+  // Save chat history to localStorage
   useEffect(() => {
     if (chatHistory.length > 0) {
+      const key = roomId ? `chatHistory_${mode}_${roomId}` : `chatHistory_${mode}_default`;
       try {
-        const serializableHistory = chatHistory.map(msg => ({
+        const serializableHistory = chatHistory.map((msg) => ({
           ...msg,
-          timestamp: msg.timestamp.toISOString()
+          timestamp: msg.timestamp.toISOString(),
         }));
-        localStorage.setItem(`chatHistory_${mode}`, JSON.stringify(serializableHistory));
+        localStorage.setItem(key, JSON.stringify(serializableHistory));
       } catch (e) {
-        console.error('Failed to save chat history to localStorage', e);
+        console.error('Failed to save chat history', e);
       }
     }
-  }, [chatHistory, mode]);
+  }, [chatHistory, mode, roomId]);
+
+  // Socket setup — ONLY for 'chat' mode
+  useEffect(() => {
+    if (mode !== 'chat' || !roomId) return;
+
+    const socket = initializeSocket(userEmail, roomId);
+    setIsSocketConnected(isConnected());
+
+    const connectHandler = () => {
+      setIsSocketConnected(true);
+      console.log('Connected to room:', roomId);
+      sendMessage('join-room', { roomId, userEmail });
+    };
+
+    const disconnectHandler = () => {
+      setIsSocketConnected(false);
+    };
+
+    const chatMessageHandler = (messageData: ChatMessage) => {
+      const messageWithDate = {
+        ...messageData,
+        timestamp: new Date(messageData.timestamp),
+      };
+      setChatHistory((prev) => [...prev, messageWithDate]);
+    };
+
+    const userJoinedHandler = ({ user, totalUsers }: { user: any; totalUsers: number }) => {
+      setUserCount(totalUsers);
+      const systemMsg: ChatMessage = {
+        id: `system-${Date.now()}`,
+        type: 'system',
+        message: `🟢 ${user.email} joined the room`,
+        timestamp: new Date(),
+      };
+      setChatHistory((prev) => [...prev, systemMsg]);
+    };
+
+    const userLeftHandler = ({ user, totalUsers }: { user: any; totalUsers: number }) => {
+      setUserCount(totalUsers);
+      const systemMsg: ChatMessage = {
+        id: `system-${Date.now()}`,
+        type: 'system',
+        message: `🔴 ${user.email} left the room`,
+        timestamp: new Date(),
+      };
+      setChatHistory((prev) => [...prev, systemMsg]);
+    };
+
+    const userCountHandler = (count: number) => {
+      setUserCount(count);
+    };
+
+    const userTypingHandler = ({ user, isTyping }: { user: any; isTyping: boolean }) => {
+      setTypingUsers((prev) => {
+        const newSet = new Set(prev);
+        if (isTyping) {
+          newSet.add(user.email);
+        } else {
+          newSet.delete(user.email);
+        }
+        return newSet;
+      });
+    };
+
+    const chatErrorHandler = (error: { message: string }) => {
+      const errorMsg: ChatMessage = {
+        id: `error-${Date.now()}`,
+        type: 'error',
+        message: `❌ ${error.message}`,
+        timestamp: new Date(),
+      };
+      setChatHistory((prev) => [...prev, errorMsg]);
+    };
+
+    receiveMessage('connect', connectHandler);
+    receiveMessage('disconnect', disconnectHandler);
+    receiveMessage('chat-message', chatMessageHandler);
+    receiveMessage('user-joined', userJoinedHandler);
+    receiveMessage('user-left', userLeftHandler);
+    receiveMessage('user-count', userCountHandler);
+    receiveMessage('user-typing', userTypingHandler);
+    receiveMessage('chat-error', chatErrorHandler);
+
+    return () => {
+      removeListener('connect', connectHandler);
+      removeListener('disconnect', disconnectHandler);
+      removeListener('chat-message', chatMessageHandler);
+      removeListener('user-joined', userJoinedHandler);
+      removeListener('user-left', userLeftHandler);
+      removeListener('user-count', userCountHandler);
+      removeListener('user-typing', userTypingHandler);
+      removeListener('chat-error', chatErrorHandler);
+      disconnectSocket();
+    };
+  }, [userEmail, mode, roomId]);
 
   // Auto-scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
-  // Cleanup preview URLs on unmount
+  // Cleanup preview URLs
   useEffect(() => {
     return () => {
-      uploadedFiles.forEach(file => {
+      uploadedFiles.forEach((file) => {
         if (file.previewUrl) {
           URL.revokeObjectURL(file.previewUrl);
         }
@@ -401,6 +270,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }, []);
+
+  // Room actions
+  const createRoom = () => {
+    const newRoomId = generateRoomId();
+    setRoomId(newRoomId);
+    setIsCreatingRoom(false);
+    setCopied(false);
+  };
+
+  const joinRoom = () => {
+    if (joinRoomInput.trim()) {
+      setRoomId(joinRoomInput.trim().toUpperCase());
+      setJoinRoomInput('');
+      setCopied(false);
+    }
+  };
+
+  const copyRoomId = () => {
+    if (roomId) {
+      navigator.clipboard.writeText(roomId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   // File handlers
   const handleDrag = (e: React.DragEvent) => {
@@ -419,20 +312,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     e.stopPropagation();
     setDragActive(false);
 
-    // 🔒 Block junior uploads
     if (userRole === 'junior') {
       const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
         type: 'error',
         message: '❌ You do not have permission to upload documents. Contact a senior user.',
         timestamp: new Date(),
       };
-      setChatHistory(prev => [...prev, errorMessage]);
+      setChatHistory((prev) => [...prev, errorMessage]);
       return;
     }
 
-    const droppedFiles = Array.from(e.dataTransfer.files).filter(
-      (file) => file.type === 'application/pdf'
-    );
+    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) => file.type === 'application/pdf');
     if (droppedFiles.length > 0) {
       handleFilesSelected(droppedFiles);
     }
@@ -440,36 +331,35 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const pdfFiles = Array.from(e.target.files).filter(
-        (file) => file.type === 'application/pdf'
-      );
+      const pdfFiles = Array.from(e.target.files).filter((file) => file.type === 'application/pdf');
       handleFilesSelected(pdfFiles);
     }
   };
 
   const handleFilesSelected = (files: File[]) => {
-    // 🔒 Block junior uploads
     if (userRole === 'junior') {
       const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
         type: 'error',
         message: '❌ You do not have permission to upload documents. Contact a senior user.',
         timestamp: new Date(),
       };
-      setChatHistory(prev => [...prev, errorMessage]);
+      setChatHistory((prev) => [...prev, errorMessage]);
       return;
     }
 
-    const newFiles = files.filter(file => !uploadedFileNamesRef.current.has(file.name));
+    const newFiles = files.filter((file) => !uploadedFileNamesRef.current.has(file.name));
     if (newFiles.length === 0) return;
 
-    const newMessages = newFiles.map(file => ({
+    const newMessages = newFiles.map((file) => ({
+      id: `system-${Date.now()}-${file.name}`,
       type: 'system' as const,
       message: `Uploading ${file.name}...`,
       timestamp: new Date(),
     }));
-    setChatHistory(prev => [...prev, ...newMessages]);
+    setChatHistory((prev) => [...prev, ...newMessages]);
 
-    newFiles.forEach(file => {
+    newFiles.forEach((file) => {
       uploadedFileNamesRef.current.add(file.name);
       handleUpload(file);
     });
@@ -481,7 +371,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleUpload = async (file: File) => {
     const fileId = `${file.name}-${Date.now()}`;
-    setUploadingFiles(prev => ({ ...prev, [fileId]: true }));
+    setUploadingFiles((prev) => ({ ...prev, [fileId]: true }));
 
     const previewUrl = URL.createObjectURL(file);
 
@@ -504,11 +394,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         previewUrl,
       };
 
-      setUploadedFiles(prev => [...prev, newUploadedFile]);
-      setChatHistory(prev => 
-        prev.map(msg => 
-          msg.message === `Uploading ${file.name}...` 
-            ? { ...msg, type: 'system', message: `✅ ${file.name} uploaded successfully!` } 
+      setUploadedFiles((prev) => [...prev, newUploadedFile]);
+      setChatHistory((prev) =>
+        prev.map((msg) =>
+          msg.message === `Uploading ${file.name}...`
+            ? { ...msg, type: 'system', message: `✅ ${file.name} uploaded successfully!` }
             : msg
         )
       );
@@ -517,16 +407,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setFilesUploaded(true);
     } catch (err: any) {
       console.error('Upload error:', err);
-      setChatHistory(prev => 
-        prev.map(msg => 
-          msg.message === `Uploading ${file.name}...` 
-            ? { ...msg, type: 'error', message: `❌ Failed to upload ${file.name}` } 
+      setChatHistory((prev) =>
+        prev.map((msg) =>
+          msg.message === `Uploading ${file.name}...`
+            ? { ...msg, type: 'error', message: `❌ Failed to upload ${file.name}` }
             : msg
         )
       );
       URL.revokeObjectURL(previewUrl);
     } finally {
-      setUploadingFiles(prev => {
+      setUploadingFiles((prev) => {
         const newUploading = { ...prev };
         delete newUploading[fileId];
         return newUploading;
@@ -534,98 +424,158 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  useEffect(() => {
-    initializeSocket('local');
-    console.log('socket initialized');
-  }, []);
-
   const removeFile = (fileId: string) => {
-    setUploadedFiles(prev => {
-      const fileToRemove = prev.find(f => f.id === fileId);
+    setUploadedFiles((prev) => {
+      const fileToRemove = prev.find((f) => f.id === fileId);
       if (fileToRemove && fileToRemove.previewUrl) {
         URL.revokeObjectURL(fileToRemove.previewUrl);
       }
-      return prev.filter(f => f.id !== fileId);
+      return prev.filter((f) => f.id !== fileId);
     });
-    
-    uploadedFileNamesRef.current.delete(
-      uploadedFiles.find(f => f.id === fileId)?.name || ''
-    );
-    
+
+    uploadedFileNamesRef.current.delete(uploadedFiles.find((f) => f.id === fileId)?.name || '');
+
     onFileRemove(fileId);
-    
+
     if (uploadedFiles.length === 1) {
       setFilesUploaded(false);
     }
   };
 
-  // ✅ Updated handleSubmit: only enforce PDF in 'chat' mode
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!message.trim()) return;
 
-    // 🔒 Only require PDF in 'chat' mode
-    if (mode === 'chat' && !filesUploaded) {
-      const errorMessage: ChatMessage = {
-        type: 'bot',
-        message: 'Please upload PDF files first before asking questions.',
+    const trimmedMessage = message.trim();
+
+    if (mode === 'mcp') {
+      // MCP Mode: Direct HTTP
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        type: 'user',
+        message: trimmedMessage,
         timestamp: new Date(),
       };
-      setChatHistory((prev) => [...prev, errorMessage]);
-      return;
+      setChatHistory((prev) => [...prev, userMessage]);
+      setMessage('');
+      setLoading(true);
+
+      try {
+        const response = await axios.post('http://localhost:3000/mcp/chat', {
+          message: trimmedMessage,
+          userId: user?._id || 'anonymous',
+        });
+
+        const botMessage: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          type: 'ai',
+          message: response.data.response || response.data.answer || "Sorry, I couldn't generate a response.",
+          timestamp: new Date(),
+        };
+        setChatHistory((prev) => [...prev, botMessage]);
+      } catch (err: any) {
+        const errorMsg: ChatMessage = {
+          id: `error-${Date.now()}`,
+          type: 'error',
+          message: 'MCP server error. Please try again.',
+          timestamp: new Date(),
+        };
+        setChatHistory((prev) => [...prev, errorMsg]);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Chat Mode
+      if (trimmedMessage.startsWith('@ai')) {
+        if (!filesUploaded) {
+          const errorMessage: ChatMessage = {
+            id: `error-${Date.now()}`,
+            type: 'error',
+            message: 'Please upload PDF files first before asking AI questions.',
+            timestamp: new Date(),
+          };
+          setChatHistory((prev) => [...prev, errorMessage]);
+          setMessage('');
+          return;
+        }
+
+        // ✅ Use HTTP for AI (like old code) — reliable!
+        const userAiMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          type: 'user',
+          message: trimmedMessage,
+          timestamp: new Date(),
+        };
+        setChatHistory((prev) => [...prev, userAiMessage]);
+        setMessage('');
+        setAiLoading(true);
+
+        try {
+          const response = await axios.post('http://localhost:3000/pdf/chat', {
+            question: trimmedMessage.substring(3).trim(),
+            sessionId,
+            model: selectedModel,
+          });
+
+          const aiMessage: ChatMessage = {
+            id: `ai-${Date.now()}`,
+            type: 'ai',
+            message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
+            timestamp: new Date(),
+          };
+          setChatHistory((prev) => [...prev, aiMessage]);
+        } catch (err: any) {
+          const errorMsg: ChatMessage = {
+            id: `error-${Date.now()}`,
+            type: 'error',
+            message: 'AI server error. Please try again.',
+            timestamp: new Date(),
+          };
+          setChatHistory((prev) => [...prev, errorMsg]);
+        } finally {
+          setAiLoading(false);
+        }
+      } else {
+        // Collaborative message (only if in a room)
+        if (!roomId) {
+          const errorMsg: ChatMessage = {
+            id: `error-${Date.now()}`,
+            type: 'error',
+            message: 'Please create or join a room to send collaborative messages.',
+            timestamp: new Date(),
+          };
+          setChatHistory((prev) => [...prev, errorMsg]);
+          return;
+        }
+
+        sendMessage('chat-message', {
+          message: trimmedMessage,
+          roomId,
+        });
+        setMessage('');
+      }
+    }
+  };
+
+  const handleTyping = (isTyping: boolean) => {
+    if (mode !== 'chat' || !roomId) return;
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
     }
 
-    if (!question.trim()) return;
+    sendMessage('typing', { isTyping, roomId });
 
-    const userMessage: ChatMessage = {
-      type: 'user',
-      message: question,
-      timestamp: new Date(),
-    };
-    setChatHistory((prev) => [...prev, userMessage]);
-    setQuestion('');
-    setLoading(true);
-
-    try {
-      let response;
-      
-      if (mode === 'mcp') {
-        response = await axios.post('http://localhost:3000/mcp/chat', {
-          message: question.trim(),
-          userId: '123'
-        });
-      } else {
-        response = await axios.post('http://localhost:3000/pdf/chat', {
-          question: question.trim(),
-          sessionId,
-          model: selectedModel,
-        });
-      }
-
-      const botMessage: ChatMessage = {
-        type: 'bot',
-        message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
-        timestamp: new Date(),
-      };
-      setChatHistory((prev) => [...prev, botMessage]);
-
-    } catch (err: any) {
-      console.error('Chat error:', err);
-      const errorMessage: ChatMessage = {
-        type: 'error',
-        message: mode === 'mcp'
-          ? 'MCP server error. Please try again.'
-          : 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date(),
-      };
-      setChatHistory((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
+    if (isTyping) {
+      typingTimeoutRef.current = setTimeout(() => {
+        sendMessage('typing', { isTyping: false, roomId });
+      }, 2000);
     }
   };
 
   const clearChat = () => {
     setChatHistory([]);
-    localStorage.removeItem(`chatHistory_${mode}`);
+    const key = roomId ? `chatHistory_${mode}_${roomId}` : `chatHistory_${mode}_default`;
+    localStorage.removeItem(key);
     uploadedFileNamesRef.current.clear();
     setFilesUploaded(false);
     setUploadedFiles([]);
@@ -637,54 +587,100 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  const saveChatHistory = async () => {
-    try {
-      const chatText = chatHistory
-        .map((msg) => {
-          const time = msg.timestamp instanceof Date ? msg.timestamp.toLocaleTimeString() : msg.timestamp;
-          return `[${msg.type.toUpperCase()} @ ${time}]: ${msg.message}`;
-        })
-        .join('\n');
-
-      await axios.post('http://localhost:3000/huffman/encode', {
-        text: chatText,
-        userId: '687aa9b887f6c83551ae3764',
-      });
-      const successMsg: ChatMessage = {
-        type: 'system',
-        message: '✅ Chat history saved successfully!',
-        timestamp: new Date(),
-      };
-      setChatHistory(prev => [...prev, successMsg]);
-    } catch (error) {
-      const errorMsg: ChatMessage = {
-        type: 'error',
-        message: '❌ Failed to save chat history.',
-        timestamp: new Date(),
-      };
-      setChatHistory(prev => [...prev, errorMsg]);
-    }
+  const isOwnMessage = (msg: ChatMessage) => {
+    return msg.type === 'user';
   };
 
   return (
-    <div className="flex flex-col h-full bg-chat-background rounded-xl border border-border overflow-hidden relative transition-all duration-300">
+    <div className="flex flex-col h-full bg-background rounded-xl border border-border overflow-hidden relative transition-all duration-300">
+      {/* Room Controls */}
+      <div className="p-3 border-b border-border bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <Hash className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">Room</span>
+          </div>
+
+          {!roomId ? (
+            <div className="flex space-x-2">
+              <button
+                onClick={createRoom}
+                disabled={isCreatingRoom}
+                className="bg-primary hover:bg-primary-hover text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              >
+                {isCreatingRoom ? 'Creating...' : 'Create Room'}
+              </button>
+              <div className="flex">
+                <input
+                  type="text"
+                  value={joinRoomInput}
+                  onChange={(e) => setJoinRoomInput(e.target.value.toUpperCase())}
+                  placeholder="Enter room ID"
+                  className="border border-input rounded-l-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <button
+                  onClick={joinRoom}
+                  disabled={!joinRoomInput.trim()}
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground px-3 py-1.5 rounded-r-lg text-sm font-medium disabled:opacity-50"
+                >
+                  Join
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center bg-muted/30 px-3 py-1.5 rounded-lg text-sm font-mono">
+                {roomId}
+              </div>
+              <button
+                onClick={copyRoomId}
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent/50"
+                title="Copy room ID"
+              >
+                {copied ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={() => setRoomId('')}
+                className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-accent/50"
+                title="Leave room"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Chat Header */}
       <div className="p-4 border-b border-border bg-surface flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            mode === 'mcp' 
-              ? 'bg-gradient-to-r from-orange-500 to-red-500' 
-              : 'bg-gradient-to-r from-purple-500 to-blue-500'
-          }`}>
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              mode === 'mcp'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500'
+                : 'bg-gradient-to-r from-purple-500 to-blue-500'
+            }`}
+          >
             {mode === 'mcp' ? <Zap className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">
-              {mode === 'mcp' ? 'MCP Assistant' : 'AI Assistant'}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {mode === 'mcp' ? 'Connected to MCP Server' : 'Powered by Advanced AI'}
-            </p>
+            <h3 className="font-semibold text-foreground">{mode === 'mcp' ? 'MCP Assistant' : 'AI Assistant'}</h3>
+            {mode === 'chat' && roomId && (
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-0.5">
+                {isSocketConnected ? (
+                  <>
+                    <Wifi className="w-3 h-3 text-green-500" /> <span>Connected</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="w-3 h-3 text-red-500" /> <span>Disconnected</span>
+                  </>
+                )}
+                <span>•</span>
+                <Users className="w-3 h-3" />
+                <span>{userCount} in room</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -693,12 +689,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             className="flex items-center justify-center bg-destructive/10 hover:bg-destructive/20 text-destructive px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
           >
             <Trash2 className="w-4 h-4 mr-1.5" /> Clear
-          </button>
-          <button
-            onClick={saveChatHistory}
-            className="flex items-center justify-center bg-primary hover:bg-primary-hover text-primary-foreground px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
-          >
-            <FileText className="w-4 h-4 mr-1.5" /> Save
           </button>
         </div>
       </div>
@@ -734,9 +724,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           </div>
           <span className="text-sm text-muted-foreground max-w-md text-right">
-            {mode === 'chat' 
-              ? 'Ask questions about your documents with AI' 
-              : 'Send any request to the MCP server (no document required).'}
+            {mode === 'chat'
+              ? roomId
+                ? 'Collaborate in real-time. Use @ai for AI.'
+                : 'Create or join a room to collaborate.'
+              : 'Send any request to MCP server (no document needed).'}
           </span>
         </div>
       </div>
@@ -745,115 +737,155 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {chatHistory.length === 0 ? (
           <div className="text-center py-12">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-              mode === 'mcp' 
-                ? 'bg-gradient-to-r from-orange-100 to-red-100' 
-                : 'bg-gradient-to-r from-purple-100 to-blue-100'
-            }`}>
-              {mode === 'mcp' ? (
-                <Zap className="w-8 h-8 text-orange-600" />
-              ) : (
-                <MessageCircle className="w-8 h-8 text-primary" />
-              )}
+            <div
+              className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                mode === 'mcp'
+                  ? 'bg-gradient-to-r from-orange-100 to-red-100'
+                  : 'bg-gradient-to-r from-purple-100 to-blue-100'
+              }`}
+            >
+              {mode === 'mcp' ? <Zap className="w-8 h-8 text-orange-600" /> : <MessageCircle className="w-8 h-8 text-primary" />}
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
               {mode === 'chat' ? 'Ready to help!' : 'MCP Server Ready!'}
             </h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              {mode === 'chat' 
-                ? 'Upload PDF documents and start asking questions about their content.' 
-                : 'Send any request to the MCP server (no document required).'}
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+              {mode === 'chat'
+                ? roomId
+                  ? 'Upload PDFs and ask questions with @ai prefix.'
+                  : 'Create or join a room to start collaborating.'
+                : 'Send any request to the MCP server.'}
             </p>
-            {/* ✅ Only show upload hint in 'chat' mode and for non-junior */}
-            {mode === 'chat' && (!user || userRole !== 'junior') && (
-              <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-muted-foreground">
+            {mode === 'chat' && roomId && (!user || userRole !== 'junior') && (
+              <div className="mt-2 flex items-center justify-center space-x-2 text-xs text-muted-foreground">
                 <Upload className="w-3 h-3" />
-                <span>Drag & drop PDF files or click the upload button</span>
+                <span>Drag & drop PDFs or click upload</span>
               </div>
             )}
-            {mode === 'chat' && userRole === 'junior' && (
-              <div className="mt-4 text-xs text-muted-foreground">
-                Contact a senior user to upload documents.
-              </div>
+            {mode === 'chat' && roomId && userRole === 'junior' && (
+              <div className="mt-2 text-xs text-muted-foreground">Contact a senior user to upload documents.</div>
             )}
           </div>
         ) : (
-          chatHistory.map((chat, index) => (
-            <div
-              key={`${mode}-${index}`}
-              className={`flex ${chat.type === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
+          chatHistory.map((chat, index) => {
+            const isOwn = isOwnMessage(chat);
+            return (
               <div
-                className={`flex items-start space-x-3 max-w-[85%] ${
-                  chat.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                }`}
+                key={`${chat.id}-${index}`}
+                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    chat.type === 'user'
-                      ? 'bg-chat-message-user'
-                      : chat.type === 'error'
-                      ? 'bg-destructive/10'
-                      : chat.type === 'system'
-                      ? 'bg-muted/50'
-                      : mode === 'mcp'
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500'
-                      : 'bg-gradient-to-r from-purple-500 to-blue-500'
-                  }`}
+                  className={`flex items-start space-x-3 max-w-[85%] ${isOwn ? 'flex-row-reverse space-x-reverse' : ''}`}
                 >
-                  {chat.type === 'user' ? (
-                    <User className="w-4 h-4 text-white" />
-                  ) : chat.type === 'error' ? (
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  ) : chat.type === 'system' ? (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  ) : mode === 'mcp' ? (
-                    <Zap className="w-4 h-4 text-white" />
-                  ) : (
-                    <Bot className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                <div
-                  className={`px-4 py-3 rounded-xl text-sm leading-relaxed ${
-                    chat.type === 'user'
-                      ? 'bg-chat-message-user text-foreground'
-                      : chat.type === 'error'
-                      ? 'bg-destructive/10 text-destructive border border-destructive/20'
-                      : chat.type === 'system'
-                      ? 'bg-muted/30 text-foreground border border-muted/50'
-                      : 'bg-chat-message-assistant text-foreground border border-chat-bubble-border'
-                  }`}
-                >
-                  <div className="whitespace-pre-wrap break-words">{chat.message}</div>
                   <div
-                    className={`text-xs mt-2 ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                       chat.type === 'user'
-                        ? 'text-chat-message-user/70'
-                        : 'text-muted-foreground'
+                        ? 'bg-primary text-primary-foreground'
+                        : chat.type === 'error'
+                        ? 'bg-destructive/10'
+                        : chat.type === 'system'
+                        ? 'bg-muted/30'
+                        : mode === 'mcp'
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500'
+                        : 'bg-gradient-to-r from-purple-500 to-blue-500'
                     }`}
                   >
-                    {chat.timestamp.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {chat.type === 'user' ? (
+                      <User className="w-4 h-4 text-white" />
+                    ) : chat.type === 'error' ? (
+                      <X className="w-4 h-4 text-destructive" />
+                    ) : chat.type === 'system' ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : mode === 'mcp' ? (
+                      <Zap className="w-4 h-4 text-white" />
+                    ) : (
+                      <Bot className="w-4 h-4 text-white" />
+                    )}
+                  </div>
+                  <div
+                    className={`px-4 py-3 rounded-xl text-sm leading-relaxed ${
+                      chat.type === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : chat.type === 'error'
+                        ? 'bg-destructive/10 text-destructive border border-destructive/20'
+                        : chat.type === 'system'
+                        ? 'bg-muted/30 text-foreground border border-muted/50'
+                        : 'bg-muted/10 text-foreground border border-muted/20'
+                    }`}
+                  >
+                    <div className="whitespace-pre-wrap break-words">{chat.message}</div>
+                    <div className="text-xs mt-2 opacity-70">
+                      {chat.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
 
-        {loading && chatHistory.length > 0 && (
+        {/* MCP Loading */}
+        {loading && mode === 'mcp' && (
           <div className="flex justify-start">
             <div className="flex items-start space-x-3">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                mode === 'mcp' 
-                  ? 'bg-gradient-to-r from-orange-500 to-red-500' 
-                  : 'bg-gradient-to-r from-purple-500 to-blue-500'
-              }`}>
-                {mode === 'mcp' ? <Zap className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-r from-orange-500 to-red-500">
+                <Zap className="w-4 h-4 text-white" />
               </div>
-              <div className="bg-chat-message-assistant text-foreground px-4 py-3 rounded-xl border border-chat-bubble-border">
+              <div className="bg-muted/10 text-foreground px-4 py-3 rounded-xl border border-muted/20">
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      style={{ animationDelay: '0.1s' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-medium">Processing with MCP...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Chat AI Loading */}
+        {aiLoading && mode === 'chat' && (
+          <div className="flex justify-start">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-blue-500">
+                <Bot className="w-4 h-4 text-white" />
+              </div>
+              <div className="bg-muted/10 text-foreground px-4 py-3 rounded-xl border border-muted/20">
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      style={{ animationDelay: '0.1s' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-medium">AI is thinking...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Typing Indicator */}
+        {mode === 'chat' && roomId && typingUsers.size > 0 && !aiLoading && (
+          <div className="flex justify-start">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-muted/30">
+                <User className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="bg-muted/30 text-foreground px-4 py-3 rounded-xl border border-muted/50">
                 <div className="flex items-center space-x-2">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
@@ -867,24 +899,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     ></div>
                   </div>
                   <span className="text-sm font-medium">
-                    {mode === 'chat' ? 'Thinking...' : 'Processing with MCP...'}
+                    {typingUsers.size === 1
+                      ? `${Array.from(typingUsers)[0]} is typing...`
+                      : `${typingUsers.size} users are typing...`}
                   </span>
                 </div>
               </div>
             </div>
           </div>
         )}
+
         <div ref={chatEndRef} />
       </div>
 
-      {/* Chat Input */}
-      <div className="p-4 border-t border-border bg-surface">
-        {/* Compact File Attachments Bar */}
-        {uploadedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-3 p-2 bg-background/50 rounded-lg border border-border">
+      {/* File Attachments Bar */}
+      {mode === 'chat' && roomId && uploadedFiles.length > 0 && (
+        <div className="p-3 border-t border-border bg-surface/50">
+          <div className="flex flex-wrap gap-2">
             {uploadedFiles.map((file) => (
-              <div 
-                key={file.id} 
+              <div
+                key={file.id}
                 className="flex items-center bg-muted/30 hover:bg-muted/50 rounded-lg px-2.5 py-1.5 text-xs transition-colors group"
               >
                 <File className="w-3.5 h-3.5 text-muted-foreground mr-1.5 flex-shrink-0" />
@@ -906,14 +940,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </div>
             ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Model Selector Dropdown */}
-        {showModelSelector && mode === 'chat' && (
+      {/* Chat Input */}
+      <div className="p-4 border-t border-border bg-surface">
+        {/* Model Selector */}
+        {showModelSelector && mode === 'chat' && roomId && (
           <div className="mb-3 p-3 bg-background/80 backdrop-blur-sm rounded-xl border border-input shadow-sm">
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Select AI Model
-            </label>
+            <label className="block text-sm font-medium text-foreground mb-2">Select AI Model</label>
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
@@ -933,25 +968,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div className="relative flex-1">
             <input
               type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
+              value={message}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                if (mode === 'chat' && roomId) handleTyping(e.target.value.length > 0);
+              }}
+              onBlur={() => mode === 'chat' && roomId && handleTyping(false)}
               placeholder={
-                mode === 'chat' 
-                  ? "Ask about your documents..." 
-                  : "Send request to MCP server..."
+                mode === 'chat'
+                  ? roomId
+                    ? 'Type @ai for AI answers, or chat normally...'
+                    : 'Join a room to chat'
+                  : 'Send request to MCP server...'
               }
-              className="w-full border border-input rounded-xl px-4 py-3 text-sm bg-background/90 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-12 placeholder:text-muted-foreground/70 transition-all duration-200"
+              className="w-full border border-input rounded-xl px-4 py-3 text-sm bg-background/90 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-20 placeholder:text-muted-foreground/70 transition-all duration-200"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSubmit(e);
                 }
               }}
-              disabled={loading}
+              disabled={loading || aiLoading || (mode === 'chat' && !roomId)}
             />
             <div className="absolute right-3 bottom-3 flex space-x-2">
-              {/* 🔒 Only show upload button if NOT junior AND in 'chat' mode */}
-              {mode === 'chat' && userRole !== 'junior' && (
+              {mode === 'chat' && roomId && userRole !== 'junior' && (
                 <button
                   type="button"
                   onClick={triggerFileInput}
@@ -961,7 +1001,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <Upload className="w-4 h-4" />
                 </button>
               )}
-              {mode === 'chat' && (
+              {mode === 'chat' && roomId && (
                 <button
                   type="button"
                   onClick={() => setShowModelSelector(!showModelSelector)}
@@ -983,21 +1023,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
           <button
             type="submit"
-            disabled={loading || !question.trim()}
+            disabled={loading || aiLoading || !message.trim() || (mode === 'chat' && !roomId)}
             className="bg-primary hover:bg-primary-hover text-primary-foreground p-3 rounded-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
           >
             <Send className="w-4 h-4" />
           </button>
         </form>
         <div className="mt-3 text-xs text-muted-foreground text-center">
-          {mode === 'chat' 
-            ? 'Press Enter to send • Shift+Enter for new line' 
+          {mode === 'chat'
+            ? roomId
+              ? 'Press Enter to send • Shift+Enter for new line • Use @ai for AI'
+              : 'Create or join a room to start chatting'
             : 'Press Enter to send to MCP server'}
         </div>
       </div>
 
-      {/* Drag and Drop Overlay — only for non-junior AND in 'chat' mode */}
-      {mode === 'chat' && dragActive && userRole !== 'junior' && (
+      {/* Drag and Drop Overlay */}
+      {mode === 'chat' && roomId && dragActive && userRole !== 'junior' && (
         <div
           className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-xl z-10 flex items-center justify-center backdrop-blur-sm"
           onDragEnter={handleDrag}
@@ -1015,11 +1057,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* PDF Preview Modal */}
       {previewFile && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setPreviewFile(null)}
         >
-          <div 
+          <div
             className="bg-background rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
