@@ -270,78 +270,72 @@
 //     </aside>
 //   );
 // };
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
-  FileText, 
-  Search, 
-  Filter, 
-  Eye, 
-  Download, 
-  Trash2,
-  MoreHorizontal,
-  Calendar,
-  FileIcon,
-  BookOpen,
-  X,
-  CheckCircle
+  FileText, Search, Eye, Download, Trash2, MoreHorizontal, Calendar, FileIcon, BookOpen, X, CheckCircle, Loader2
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-export interface Document {
-  id: string;
-  title: string;
-  fileType: string;
-  pages: number;
-  uploadedAt: Date;
-  tags: string[];
-  status: "processed" | "processing" | "error";
-}
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import axios from 'axios';
+import type { Document } from './ChatInterface'; // Reuse type
 
 interface DocumentsPanelProps {
   collapsed: boolean;
   onToggle: () => void;
-  documents?: Document[];
+  documents: Document[];
   onRemoveDocument: (id: string) => void;
   onPreviewDocument: (doc: Document) => void;
   selectedDocumentId: string | null;
+  onDocumentsChange: (docs: Document[]) => void;
 }
 
 export const DocumentsPanel = ({
   collapsed,
   onToggle,
-  documents = [],
+  documents = [], // ✅ Default to empty array
   onRemoveDocument,
   onPreviewDocument,
   selectedDocumentId,
+  onDocumentsChange,
 }: DocumentsPanelProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [recentlyAdded, setRecentlyAdded] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Track recently added documents for highlight effect
+  const fetchDocuments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('http://localhost:3000/pdf/documents');
+      const docs: Document[] = res.data.documents.map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        fileType: d.fileType || 'pdf',
+        pages: d.pages,
+        uploadedAt: new Date(d.uploadedAt),
+        tags: d.tags || [],
+        status: d.status || 'processed',
+      }));
+      onDocumentsChange(docs);
+    } catch (err) {
+      console.error('Failed to fetch documents', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [onDocumentsChange]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
   useEffect(() => {
     if (documents.length > 0) {
-      const newDocs = documents
-        .filter(doc => !recentlyAdded.includes(doc.id))
-        .map(doc => doc.id);
-      
+      const newDocs = documents.filter(d => !recentlyAdded.includes(d.id)).map(d => d.id);
       if (newDocs.length > 0) {
         setRecentlyAdded(prev => [...prev, ...newDocs]);
-        
-        // Remove highlight after 3 seconds
-        const timer = setTimeout(() => {
-          setRecentlyAdded(prev => prev.filter(id => !newDocs.includes(id)));
-        }, 3000);
-        
+        const timer = setTimeout(() => setRecentlyAdded(prev => prev.filter(id => !newDocs.includes(id))), 3000);
         return () => clearTimeout(timer);
       }
     }
@@ -357,7 +351,6 @@ export const DocumentsPanel = ({
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffHours / 24);
-    
     if (diffHours < 1) return "Just uploaded";
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays === 1) return "Yesterday";
@@ -381,178 +374,118 @@ export const DocumentsPanel = ({
     }
   };
 
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await axios.delete(`http://localhost:3000/pdf/documents/${id}`);
+      onRemoveDocument(id);
+    } catch (err) {
+      console.error('Delete failed', err);
+    }
+  };
+
+  const handleDownload = async (doc: Document, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await axios.get(`http://localhost:3000/pdf/download/${doc.id}`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.title;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed', err);
+    }
+  };
+
   return (
-    <aside className={`
-      ${collapsed ? 'w-0' : 'w-80'} 
-      transition-all duration-300 ease-smooth 
-      bg-sidebar border-l border-sidebar-border
-      flex flex-col overflow-hidden
-    `}>
+    <aside className={`${collapsed ? 'w-0' : 'w-80'} transition-all duration-300 ease-smooth bg-sidebar border-l border-sidebar-border flex flex-col overflow-hidden`}>
       {!collapsed && (
         <>
-          {/* Header */}
           <div className="p-4 border-b border-sidebar-border">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Documents</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onToggle}
-                className="h-8 w-8"
-              >
+              <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search documents..."
-                className="pl-10"
-              />
+              <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search documents..." className="pl-10" />
             </div>
           </div>
 
-          {/* Documents List */}
           <ScrollArea className="flex-1 p-4">
-            <div className="space-y-3">
-              {filteredDocuments.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No documents uploaded</p>
-                  <p className="text-xs mt-1">Upload PDFs to get started</p>
-                </div>
-              ) : (
-                filteredDocuments.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className={`
-                      group relative rounded-lg p-4 cursor-pointer transition-all duration-200
-                      hover:bg-sidebar-hover border border-transparent
-                      ${selectedDocumentId === doc.id 
-                        ? 'bg-sidebar-active border-primary/20 shadow-sm' 
-                        : 'hover:border-card-border'
-                      }
-                      ${recentlyAdded.includes(doc.id) 
-                        ? 'ring-2 ring-green-500/50 bg-green-50/30 dark:bg-green-900/20' 
-                        : ''
-                      }
-                    `}
-                    onClick={() => onPreviewDocument(doc)}
-                  >
-                    {/* Document Header */}
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredDocuments.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No documents uploaded</p>
+                <p className="text-xs mt-1">Upload PDFs to get started</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredDocuments.map(doc => (
+                  <div key={doc.id} className={`group relative rounded-lg p-4 cursor-pointer transition-all duration-200 hover:bg-sidebar-hover border border-transparent ${selectedDocumentId === doc.id ? 'bg-sidebar-active border-primary/20 shadow-sm' : 'hover:border-card-border'} ${recentlyAdded.includes(doc.id) ? 'ring-2 ring-green-500/50 bg-green-50/30 dark:bg-green-900/20' : ''}`} onClick={() => onPreviewDocument(doc)}>
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="flex-shrink-0 mt-1">
-                        {getFileIcon(doc.fileType)}
-                      </div>
-                      
+                      <div className="flex-shrink-0 mt-1">{getFileIcon(doc.fileType)}</div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm leading-tight line-clamp-2 mb-2">
-                          {doc.title}
-                        </h3>
-                        
+                        <h3 className="font-medium text-sm leading-tight line-clamp-2 mb-2">{doc.title}</h3>
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            {doc.fileType}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {doc.pages} pages
-                          </Badge>
-                          <Badge variant="secondary" className={`text-xs ${getStatusColor(doc.status)}`}>
-                            {doc.status}
-                          </Badge>
+                          <Badge variant="outline" className="text-xs">{doc.fileType}</Badge>
+                          <Badge variant="outline" className="text-xs">{doc.pages} pages</Badge>
+                          <Badge variant="secondary" className={`text-xs ${getStatusColor(doc.status)}`}>{doc.status}</Badge>
                         </div>
                       </div>
-
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                             <MoreHorizontal className="h-3 w-3" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            onPreviewDocument(doc);
-                          }}>
-                            <Eye className="h-3 w-3 mr-2" />
-                            Preview
+                          <DropdownMenuItem onClick={e => { e.stopPropagation(); onPreviewDocument(doc); }}>
+                            <Eye className="h-3 w-3 mr-2" /> Preview
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                            <Download className="h-3 w-3 mr-2" />
-                            Download
+                          <DropdownMenuItem onClick={e => handleDownload(doc, e)}>
+                            <Download className="h-3 w-3 mr-2" /> Download
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRemoveDocument(doc.id);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 mr-2" />
-                            Delete
+                          <DropdownMenuItem className="text-destructive" onClick={e => handleDelete(doc.id, e)}>
+                            <Trash2 className="h-3 w-3 mr-2" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-
-                    {/* Tags */}
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {doc.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
+                      {doc.tags.map((tag, i) => <Badge key={i} variant="secondary" className="text-xs">{tag}</Badge>)}
                     </div>
-
-                    {/* Footer */}
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(doc.uploadedAt)}
-                      </div>
-                      {recentlyAdded.includes(doc.id) && (
-                        <CheckCircle className="h-3 w-3 text-green-500" />
-                      )}
+                      <div className="flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(doc.uploadedAt)}</div>
+                      {recentlyAdded.includes(doc.id) && <CheckCircle className="h-3 w-3 text-green-500" />}
                     </div>
-
-                    {/* Expanded Actions */}
                     {selectedDocumentId === doc.id && (
                       <div className="mt-3 pt-3 border-t border-card-border">
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <BookOpen className="h-3 w-3 mr-1" />
-                            Summarize
-                          </Button>
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <FileText className="h-3 w-3 mr-1" />
-                            Q&A
-                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1"><BookOpen className="h-3 w-3 mr-1" /> Summarize</Button>
+                          <Button variant="outline" size="sm" className="flex-1"><FileText className="h-3 w-3 mr-1" /> Q&A</Button>
                         </div>
                       </div>
                     )}
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </ScrollArea>
 
-          {/* Footer */}
           <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{filteredDocuments.length} documents</span>
-              <Button variant="ghost" size="sm" className="h-auto p-1">
-                <Filter className="h-3 w-3 mr-1" />
-                Filter
-              </Button>
             </div>
           </div>
         </>

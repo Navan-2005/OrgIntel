@@ -273,9 +273,8 @@
 //     </div>
 //   );
 // };
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, ListChecks, MessageSquare } from 'lucide-react';
+import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, ListChecks, MessageSquare, Zap } from 'lucide-react';
 import axios from 'axios';
 
 // Types
@@ -292,16 +291,6 @@ interface UploadedFile {
   pages: number;
   uploadTime: Date;
   rawFile: File;
-}
-
-interface Document {
-  id: string;
-  title: string;
-  fileType: string;
-  pages: number;
-  uploadedAt: Date;
-  tags: string[];
-  status: "processed" | "processing" | "error";
 }
 
 const AVAILABLE_MODELS = [
@@ -329,7 +318,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>(AVAILABLE_MODELS[0].id);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
-  const [mode, setMode] = useState<'chat' | 'mcp'>('chat'); // Changed from 'mcq' to 'mcp'
+  const [mode, setMode] = useState<'chat' | 'mcp'>('chat');
 
   // File upload state
   const [dragActive, setDragActive] = useState(false);
@@ -344,6 +333,45 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setSessionId(newSessionId);
   }, []);
+
+  // Load chat history from localStorage when mode changes
+  useEffect(() => {
+    const loadChatHistory = () => {
+      const savedHistory = localStorage.getItem(`chatHistory_${mode}`);
+      if (savedHistory) {
+        try {
+          const parsedHistory = JSON.parse(savedHistory);
+          const historyWithDates = parsedHistory.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          setChatHistory(historyWithDates);
+        } catch (e) {
+          console.error('Failed to parse chat history from localStorage', e);
+          setChatHistory([]);
+        }
+      } else {
+        setChatHistory([]);
+      }
+    };
+
+    loadChatHistory();
+  }, [mode]);
+
+  // Save chat history to localStorage whenever it changes
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      try {
+        const serializableHistory = chatHistory.map(msg => ({
+          ...msg,
+          timestamp: msg.timestamp.toISOString()
+        }));
+        localStorage.setItem(`chatHistory_${mode}`, JSON.stringify(serializableHistory));
+      } catch (e) {
+        console.error('Failed to save chat history to localStorage', e);
+      }
+    }
+  }, [chatHistory, mode]);
 
   // Auto-scroll
   useEffect(() => {
@@ -391,14 +419,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handleFilesSelected = (files: File[]) => {
-    // Filter out already uploaded files to prevent duplicates
     const newFiles = files.filter(file => !uploadedFileNamesRef.current.has(file.name));
     
-    if (newFiles.length === 0) {
-      return; // No new files to upload
-    }
+    if (newFiles.length === 0) return;
 
-    // Add system messages for each new file
     const newMessages = newFiles.map(file => ({
       type: 'system' as const,
       message: `Uploading ${file.name}...`,
@@ -406,10 +430,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }));
     setChatHistory(prev => [...prev, ...newMessages]);
     
-    // Add to uploaded tracking and start uploads immediately
     newFiles.forEach(file => {
       uploadedFileNamesRef.current.add(file.name);
-      handleUpload(file); // Upload immediately, don't queue
+      handleUpload(file);
     });
   };
 
@@ -439,7 +462,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         rawFile: file,
       };
 
-      // Update chat history with success message
       setChatHistory(prev => 
         prev.map(msg => 
           msg.message === `Uploading ${file.name}...` 
@@ -448,12 +470,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         )
       );
 
-      // Notify parent to add to documents panel
       onFileUpload([newUploadedFile]);
       setFilesUploaded(true);
     } catch (err: any) {
       console.error('Upload error:', err);
-      // Update chat history with error message
       setChatHistory(prev => 
         prev.map(msg => 
           msg.message === `Uploading ${file.name}...` 
@@ -470,7 +490,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  // Chat handlers
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!filesUploaded) {
@@ -495,13 +514,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setLoading(true);
 
     try {
-      // Determine endpoint based on mode - MCP uses different endpoint
       let endpoint = '';
       if (mode === 'mcp') {
-        // MCP server endpoint - adjust URL as needed for your MCP server
-        endpoint = 'http://localhost:3000/mcp/chat'; // or your actual MCP server URL
+        endpoint = 'http://localhost:3000/mcp/chat';
       } else {
-        // Normal chat endpoint
         endpoint = 'http://localhost:3000/pdf/chat';
       }
       
@@ -534,16 +550,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const clearChat = () => {
     setChatHistory([]);
-    // Reset uploaded files tracking when chat is cleared
+    localStorage.removeItem(`chatHistory_${mode}`);
     uploadedFileNamesRef.current.clear();
     setFilesUploaded(false);
-    // Keep current mode when clearing
   };
 
-  // Handle mode switching - clear chat when switching modes for clean separation
   const handleModeChange = (newMode: 'chat' | 'mcp') => {
     if (newMode !== mode) {
-      setChatHistory([]); // Clear chat history when switching modes
       setMode(newMode);
     }
   };
@@ -561,73 +574,93 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         text: chatText,
         userId: '687aa9b887f6c83551ae3764',
       });
-      alert('Chat history saved!');
+      // Show success toast instead of alert
+      const successMsg: ChatMessage = {
+        type: 'system',
+        message: '✅ Chat history saved successfully!',
+        timestamp: new Date(),
+      };
+      setChatHistory(prev => [...prev, successMsg]);
     } catch (error) {
-      alert('Failed to save chat history.');
+      const errorMsg: ChatMessage = {
+        type: 'error',
+        message: '❌ Failed to save chat history.',
+        timestamp: new Date(),
+      };
+      setChatHistory(prev => [...prev, errorMsg]);
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-chat-background rounded-xl border border-border overflow-hidden relative">
+    <div className="flex flex-col h-full bg-chat-background rounded-xl border border-border overflow-hidden relative transition-all duration-300">
       {/* Chat Header */}
-      <div className="p-3 border-b border-border bg-surface flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-            <Bot className="w-4 h-4 text-white" />
+      <div className="p-4 border-b border-border bg-surface flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+            mode === 'mcp' 
+              ? 'bg-gradient-to-r from-orange-500 to-red-500' 
+              : 'bg-gradient-to-r from-purple-500 to-blue-500'
+          }`}>
+            {mode === 'mcp' ? <Zap className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
           </div>
-          <h3 className="font-medium text-foreground">
-            {mode === 'mcp' ? 'MCP Assistant' : 'AI Assistant'}
-          </h3>
+          <div>
+            <h3 className="font-semibold text-foreground">
+              {mode === 'mcp' ? 'MCP Assistant' : 'AI Assistant'}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {mode === 'mcp' ? 'Connected to MCP Server' : 'Powered by Advanced AI'}
+            </p>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={clearChat}
-            className="flex items-center justify-center bg-destructive text-destructive-foreground px-2.5 py-1.5 rounded text-xs hover:bg-destructive/90 transition-colors"
+            className="flex items-center justify-center bg-destructive/10 hover:bg-destructive/20 text-destructive px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
           >
-            <Trash2 className="w-3 h-3 mr-1" /> Clear
+            <Trash2 className="w-4 h-4 mr-1.5" /> Clear
           </button>
           <button
             onClick={saveChatHistory}
-            className="flex items-center justify-center bg-primary text-primary-foreground px-2.5 py-1.5 rounded text-xs hover:bg-primary-hover transition-colors"
+            className="flex items-center justify-center bg-primary hover:bg-primary-hover text-primary-foreground px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
           >
-            Save
+            <FileText className="w-4 h-4 mr-1.5" /> Save
           </button>
         </div>
       </div>
 
-      {/* Mode Toggle - Now with MCP mode */}
+      {/* Mode Toggle */}
       <div className="p-3 border-b border-border bg-surface">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-medium text-foreground">Mode:</span>
-            <div className="flex rounded-md border border-input overflow-hidden">
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-foreground">Mode:</span>
+            <div className="flex rounded-lg border border-input overflow-hidden bg-background/50 backdrop-blur-sm">
               <button
                 onClick={() => handleModeChange('chat')}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium transition-all duration-200 ${
                   mode === 'chat'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-background text-foreground hover:bg-accent'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-transparent text-foreground hover:bg-accent/50'
                 }`}
               >
-                <MessageSquare className="w-3 h-3 inline mr-1" />
+                <MessageSquare className="w-4 h-4 inline mr-2" />
                 Chat
               </button>
               <button
                 onClick={() => handleModeChange('mcp')}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium transition-all duration-200 ${
                   mode === 'mcp'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-background text-foreground hover:bg-accent'
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-sm'
+                    : 'bg-transparent text-foreground hover:bg-accent/50'
                 }`}
               >
-                <ListChecks className="w-3 h-3 inline mr-1" />
+                <Zap className="w-4 h-4 inline mr-2" />
                 MCP
               </button>
             </div>
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground max-w-md text-right">
             {mode === 'chat' 
-              ? 'Ask questions about your documents' 
+              ? 'Ask questions about your documents with AI' 
               : 'Connect to MCP server for specialized processing'}
           </span>
         </div>
@@ -636,63 +669,81 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Chat Window */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {chatHistory.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <MessageCircle className="w-6 h-6 text-primary" />
+          <div className="text-center py-12">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+              mode === 'mcp' 
+                ? 'bg-gradient-to-r from-orange-100 to-red-100' 
+                : 'bg-gradient-to-r from-purple-100 to-blue-100'
+            }`}>
+              {mode === 'mcp' ? (
+                <Zap className="w-8 h-8 text-orange-600" />
+              ) : (
+                <MessageCircle className="w-8 h-8 text-primary" />
+              )}
             </div>
-            <p className="text-sm font-medium text-foreground mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               {mode === 'chat' ? 'Ready to help!' : 'MCP Server Ready!'}
-            </p>
-            <p className="text-xs text-muted-foreground">
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
               {mode === 'chat' 
-                ? 'Upload documents and start asking questions' 
-                : 'Upload documents and connect to MCP server'}
+                ? 'Upload PDF documents and start asking questions about their content.' 
+                : 'Upload documents and send requests to the MCP server for specialized processing.'}
             </p>
+            <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-muted-foreground">
+              <Upload className="w-3 h-3" />
+              <span>Drag & drop PDF files or click the upload button</span>
+            </div>
           </div>
         ) : (
           chatHistory.map((chat, index) => (
             <div
-              key={index}
+              key={`${mode}-${index}`}
               className={`flex ${chat.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`flex items-start space-x-2 max-w-xs ${
+                className={`flex items-start space-x-3 max-w-[85%] ${
                   chat.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                 }`}
               >
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     chat.type === 'user'
                       ? 'bg-chat-message-user'
                       : chat.type === 'error'
                       ? 'bg-destructive/10'
+                      : chat.type === 'system'
+                      ? 'bg-muted/50'
+                      : mode === 'mcp'
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500'
                       : 'bg-gradient-to-r from-purple-500 to-blue-500'
                   }`}
                 >
                   {chat.type === 'user' ? (
-                    <User className="w-3 h-3 text-white" />
+                    <User className="w-4 h-4 text-white" />
                   ) : chat.type === 'error' ? (
-                    <Trash2 className="w-3 h-3 text-destructive" />
+                    <Trash2 className="w-4 h-4 text-destructive" />
                   ) : chat.type === 'system' ? (
-                    <CheckCircle className="w-3 h-3 text-green-500" />
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  ) : mode === 'mcp' ? (
+                    <Zap className="w-4 h-4 text-white" />
                   ) : (
-                    <Bot className="w-3 h-3 text-white" />
+                    <Bot className="w-4 h-4 text-white" />
                   )}
                 </div>
                 <div
-                  className={`px-3 py-2 rounded-lg text-sm ${
+                  className={`px-4 py-3 rounded-xl text-sm leading-relaxed ${
                     chat.type === 'user'
                       ? 'bg-chat-message-user text-foreground'
                       : chat.type === 'error'
                       ? 'bg-destructive/10 text-destructive border border-destructive/20'
                       : chat.type === 'system'
-                      ? 'bg-muted/50 text-foreground border border-muted'
+                      ? 'bg-muted/30 text-foreground border border-muted/50'
                       : 'bg-chat-message-assistant text-foreground border border-chat-bubble-border'
                   }`}
                 >
-                  <div className="whitespace-pre-wrap">{chat.message}</div>
+                  <div className="whitespace-pre-wrap break-words">{chat.message}</div>
                   <div
-                    className={`text-xs mt-1 ${
+                    className={`text-xs mt-2 ${
                       chat.type === 'user'
                         ? 'text-chat-message-user/70'
                         : 'text-muted-foreground'
@@ -711,24 +762,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {loading && chatHistory.length > 0 && (
           <div className="flex justify-start">
-            <div className="flex items-start space-x-2">
-              <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                <Bot className="w-3 h-3 text-white" />
+            <div className="flex items-start space-x-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                mode === 'mcp' 
+                  ? 'bg-gradient-to-r from-orange-500 to-red-500' 
+                  : 'bg-gradient-to-r from-purple-500 to-blue-500'
+              }`}>
+                {mode === 'mcp' ? <Zap className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
               </div>
-              <div className="bg-chat-message-assistant text-foreground px-3 py-2 rounded-lg border border-chat-bubble-border">
+              <div className="bg-chat-message-assistant text-foreground px-4 py-3 rounded-xl border border-chat-bubble-border">
                 <div className="flex items-center space-x-2">
                   <div className="flex space-x-1">
-                    <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
                     <div
-                      className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
                       style={{ animationDelay: '0.1s' }}
                     ></div>
                     <div
-                      className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
                       style={{ animationDelay: '0.2s' }}
                     ></div>
                   </div>
-                  <span className="text-xs">
+                  <span className="text-sm font-medium">
                     {mode === 'chat' ? 'Thinking...' : 'Processing with MCP...'}
                   </span>
                 </div>
@@ -742,15 +797,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Chat Input */}
       <div className="p-4 border-t border-border bg-surface">
         {/* Model Selector Dropdown */}
-        {showModelSelector && mode === 'chat' && ( // Only show model selector in chat mode
-          <div className="mb-3 p-2 bg-background rounded-lg border border-input">
-            <label className="block text-xs font-medium text-foreground mb-1">
+        {showModelSelector && mode === 'chat' && (
+          <div className="mb-3 p-3 bg-background/80 backdrop-blur-sm rounded-xl border border-input shadow-sm">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Select AI Model
             </label>
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full text-sm bg-background border border-input rounded px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full text-sm bg-background/90 border border-input rounded-lg px-3 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               onBlur={() => setShowModelSelector(false)}
             >
               {AVAILABLE_MODELS.map((model) => (
@@ -762,7 +817,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex items-end space-x-2">
+        <form onSubmit={handleSubmit} className="flex items-end space-x-3">
           <div className="relative flex-1">
             <input
               type="text"
@@ -773,7 +828,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   ? "Ask about your documents..." 
                   : "Send request to MCP server..."
               }
-              className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
+              className="w-full border border-input rounded-xl px-4 py-3 text-sm bg-background/90 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-12 placeholder:text-muted-foreground/70 transition-all duration-200"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -782,20 +837,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               }}
               disabled={loading}
             />
-            <div className="absolute right-2 bottom-2 flex space-x-1">
+            <div className="absolute right-3 bottom-3 flex space-x-2">
               <button
                 type="button"
                 onClick={triggerFileInput}
-                className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-accent"
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent/50 transition-all duration-200"
                 title="Attach files"
               >
                 <Upload className="w-4 h-4" />
               </button>
-              {mode === 'chat' && ( // Only show model selector button in chat mode
+              {mode === 'chat' && (
                 <button
                   type="button"
                   onClick={() => setShowModelSelector(!showModelSelector)}
-                  className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-accent"
+                  className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent/50 transition-all duration-200"
                   title="Select model"
                 >
                   <Settings className="w-4 h-4" />
@@ -814,12 +869,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <button
             type="submit"
             disabled={loading || !question.trim()}
-            className="bg-primary text-primary-foreground p-2 rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="bg-primary hover:bg-primary-hover text-primary-foreground p-3 rounded-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
           >
             <Send className="w-4 h-4" />
           </button>
         </form>
-        <div className="mt-2 text-xs text-muted-foreground text-center">
+        <div className="mt-3 text-xs text-muted-foreground text-center">
           {mode === 'chat' 
             ? 'Press Enter to send • Shift+Enter for new line' 
             : 'Press Enter to send to MCP server'}
@@ -829,15 +884,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Drag and Drop Overlay */}
       {dragActive && (
         <div
-          className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-xl z-10 flex items-center justify-center"
+          className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-xl z-10 flex items-center justify-center backdrop-blur-sm"
           onDragEnter={handleDrag}
           onDragOver={handleDrag}
           onDragLeave={handleDrag}
           onDrop={handleDrop}
         >
-          <div className="text-center p-4 bg-background/80 backdrop-blur-sm rounded-lg border border-primary">
-            <Upload className="w-8 h-8 text-primary mx-auto mb-2" />
-            <p className="text-sm font-medium text-foreground">Drop PDFs here</p>
+          <div className="text-center p-6 bg-background/90 backdrop-blur-sm rounded-xl border border-primary shadow-lg">
+            <Upload className="w-12 h-12 text-primary mx-auto mb-3" />
+            <p className="text-lg font-medium text-foreground mb-1">Drop PDFs here</p>
+            <p className="text-sm text-muted-foreground">Release to upload your documents</p>
           </div>
         </div>
       )}
