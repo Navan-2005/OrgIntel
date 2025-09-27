@@ -11,7 +11,6 @@ const pdfRouter=require('./routes/pdfRoutes.js')
 const userRouter=require('./routes/userroutes.js')
 const mcprouter=require('./routes/mcproutes.js')
 const connectDB=require('./db/db.js')
-const huffmanRouter=require('./routes/huffmanroutes.js')
 
 connectDB();
 

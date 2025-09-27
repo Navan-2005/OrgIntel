@@ -109,6 +109,10 @@ server.tool(
 // 🔁 Manage transport sessions for multiple clients
 const transports = {};
 
+app.get('/health',async(req,res)=>{
+    res.send("Running")
+  })
+
 app.get("/sse", async (req, res) => {
     const transport = new SSEServerTransport("/messages", res);
     transports[transport.sessionId] = transport;
