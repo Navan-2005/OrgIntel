@@ -1,8 +1,9 @@
 {
   "type": "module",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.9.0",
-    "dotenv": "^16.5.0",
+    "@google/genai": "^1.21.0",
+    "@modelcontextprotocol/sdk": "^1.18.2",
+    "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
     "loudness": "^0.4.2",
