@@ -274,7 +274,7 @@
 //   );
 // };
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, ListChecks, MessageSquare, Zap } from 'lucide-react';
+import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, MessageSquare, Zap, X, Eye, File, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 
 // Types
@@ -291,6 +291,7 @@ interface UploadedFile {
   pages: number;
   uploadTime: Date;
   rawFile: File;
+  previewUrl?: string;
 }
 
 const AVAILABLE_MODELS = [
@@ -319,6 +320,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const [mode, setMode] = useState<'chat' | 'mcp'>('chat');
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null); // For modal
 
   // File upload state
   const [dragActive, setDragActive] = useState(false);
@@ -377,6 +380,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      uploadedFiles.forEach(file => {
+        if (file.previewUrl) {
+          URL.revokeObjectURL(file.previewUrl);
+        }
+      });
+    };
+  }, [uploadedFiles]);
 
   const formatFileSize = useCallback((bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -444,6 +458,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const fileId = `${file.name}-${Date.now()}`;
     setUploadingFiles(prev => ({ ...prev, [fileId]: true }));
 
+    const previewUrl = URL.createObjectURL(file);
+
     const formData = new FormData();
     formData.append('pdfs', file);
     formData.append('sessionId', sessionId);
@@ -460,8 +476,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         id: fileId,
         pages: response.data?.pages || Math.floor(Math.random() * 50) + 1,
         rawFile: file,
+        previewUrl,
       };
 
+      setUploadedFiles(prev => [...prev, newUploadedFile]);
       setChatHistory(prev => 
         prev.map(msg => 
           msg.message === `Uploading ${file.name}...` 
@@ -481,12 +499,33 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             : msg
         )
       );
+      URL.revokeObjectURL(previewUrl);
     } finally {
       setUploadingFiles(prev => {
         const newUploading = { ...prev };
         delete newUploading[fileId];
         return newUploading;
       });
+    }
+  };
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => {
+      const fileToRemove = prev.find(f => f.id === fileId);
+      if (fileToRemove && fileToRemove.previewUrl) {
+        URL.revokeObjectURL(fileToRemove.previewUrl);
+      }
+      return prev.filter(f => f.id !== fileId);
+    });
+    
+    uploadedFileNamesRef.current.delete(
+      uploadedFiles.find(f => f.id === fileId)?.name || ''
+    );
+    
+    onFileRemove(fileId);
+    
+    if (uploadedFiles.length === 1) {
+      setFilesUploaded(false);
     }
   };
 
@@ -553,6 +592,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     localStorage.removeItem(`chatHistory_${mode}`);
     uploadedFileNamesRef.current.clear();
     setFilesUploaded(false);
+    setUploadedFiles([]);
   };
 
   const handleModeChange = (newMode: 'chat' | 'mcp') => {
@@ -574,7 +614,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         text: chatText,
         userId: '687aa9b887f6c83551ae3764',
       });
-      // Show success toast instead of alert
       const successMsg: ChatMessage = {
         type: 'system',
         message: '✅ Chat history saved successfully!',
@@ -796,6 +835,35 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* Chat Input */}
       <div className="p-4 border-t border-border bg-surface">
+        {/* Compact File Attachments Bar */}
+        {uploadedFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3 p-2 bg-background/50 rounded-lg border border-border">
+            {uploadedFiles.map((file) => (
+              <div 
+                key={file.id} 
+                className="flex items-center bg-muted/30 hover:bg-muted/50 rounded-lg px-2.5 py-1.5 text-xs transition-colors group"
+              >
+                <File className="w-3.5 h-3.5 text-muted-foreground mr-1.5 flex-shrink-0" />
+                <span className="max-w-[120px] truncate text-foreground mr-1.5">{file.name}</span>
+                <button
+                  onClick={() => setPreviewFile(file)}
+                  className="text-muted-foreground hover:text-foreground p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Preview"
+                >
+                  <Eye className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => removeFile(file.id)}
+                  className="text-muted-foreground hover:text-destructive p-0.5 rounded ml-1"
+                  title="Remove"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Model Selector Dropdown */}
         {showModelSelector && mode === 'chat' && (
           <div className="mb-3 p-3 bg-background/80 backdrop-blur-sm rounded-xl border border-input shadow-sm">
@@ -894,6 +962,41 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <Upload className="w-12 h-12 text-primary mx-auto mb-3" />
             <p className="text-lg font-medium text-foreground mb-1">Drop PDFs here</p>
             <p className="text-sm text-muted-foreground">Release to upload your documents</p>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Preview Modal */}
+      {previewFile && (
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setPreviewFile(null)}
+        >
+          <div 
+            className="bg-background rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="font-medium text-foreground truncate">{previewFile.name}</h3>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-muted-foreground">
+                  {formatFileSize(previewFile.size)} • {previewFile.pages} pages
+                </span>
+                <button
+                  onClick={() => setPreviewFile(null)}
+                  className="p-1.5 rounded-full hover:bg-accent"
+                >
+                  <X className="w-4 h-4 text-foreground" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={previewFile.previewUrl}
+                className="w-full h-full"
+                title={`Preview of ${previewFile.name}`}
+              />
+            </div>
           </div>
         </div>
       )}
