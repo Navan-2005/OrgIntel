@@ -8,7 +8,7 @@ import { getYoutubeVideos } from "./Tools/getutubevideos.js";
 import { getChannelVideos } from "./Tools/getChannel.js";
 import { adjustVolume } from "./Tools/loudness.js";
 import { takeScreenshot } from "./Tools/takescreenshot.js";
-import { timetable } from "./Tools/timetable.js";
+import { getclasses } from "./Tools/timetable.js";
 
 const server = new McpServer({
     name: "example-server",
@@ -96,15 +96,16 @@ server.tool(
   );
 
   server.tool(
-    "getclasses",
-    "Get Classes depending upon the day",
-    {
-        day: z.string()
-    },
-    async ({ day }) => {
-        return timetable(day);
-    }
-  )
+  "getclasses",
+  "Get Classes depending upon the day",
+  { day: z.string() },
+  async ({ day }) => {
+    console.log('Day inputted : ',day);
+    
+    // Your function already returns the correct MCP format
+    return await getclasses(day);
+  }
+);
 
 // 🔁 Manage transport sessions for multiple clients
 const transports = {};

@@ -11,6 +11,8 @@ let tools = [];
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const mcpClient = new Client({ name: 'example-client', version: '1.0.0' });
 
+console.log('API Key:', process.env.GEMINI_API_KEY);
+
 const chatHistories = new Map(); // userId => history[]
 
 // Initialize MCP connection
@@ -53,7 +55,7 @@ router.post('/chat', async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.0-flash-lite',
       contents: chatHistory,
       config: { tools: [{ functionDeclarations: tools }] }
     });
