@@ -1,67 +1,67 @@
 import { config } from "dotenv";
+import { google } from "googleapis";
+
 config();
 
-export async function timetable(day, range = "Sheet1!A1:G10") {
+export async function getclasses(day, range = "Sheet1!A1:G10") {
+    console.log('Google API Key:', process.env.GOOGLE_APPLICATION_CREDENTIALS);
+    
+  try {
+    // Authenticate with Google Service Account
+    const auth = new google.auth.GoogleAuth({
+      keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS, // JSON key
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: "v4", auth: client });
+
     const spreadsheetId = process.env.SHEET_ID;
-    const apiKey = process.env.SHEETS_API_KEY;
 
-    const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`
-    );
-    const data = await response.json();
+    // Fetch values from Google Sheets
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
 
-    // Handle error from API
-    if (!response.ok || data.error) {
-        const message = data.error?.message || "An unknown error occurred.";
-        return {
-            content: [
-                {
-                    text: `❌ Could not fetch data from Google Sheets. Error: ${message}`,
-                    type: "text"
-                }
-            ]
-        };
-    }
-
-    const rows = data.values || [];
+    const rows = response.data.values || [];
     if (rows.length === 0) {
-        return {
-            content: [
-                {
-                    text: "No data found in the sheet.",
-                    type: "text"
-                }
-            ]
-        };
+      return {
+        content: [{ text: "No data found in the sheet.", type: "text" }],
+      };
     }
 
-    // First row is header, so skip it
-    const header = rows[0];
+    // First row = header, skip it
     const body = rows.slice(1);
 
-    // Find the row matching the given day (case-insensitive)
+    // Find row matching the given day
     const row = body.find(r => r[0]?.toLowerCase() === day.toLowerCase());
 
     if (!row) {
-        return {
-            content: [
-                {
-                    text: `⚠️ No classes found for "${day}".`,
-                    type: "text"
-                }
-            ]
-        };
+      return {
+        content: [{ text: `⚠️ No classes found for "${day}".`, type: "text" }],
+      };
     }
 
-    // Collect subjects (skip the first column since it's the day)
-    const subjects = row.slice(1).filter(Boolean); // remove empty cells
+    // Subjects = all columns after Day
+    const subjects = row.slice(1).filter(Boolean);
 
     return {
-        content: [
-            {
-                text: `📅 Timetable for ${day}:\n\n${subjects.join(", ")}`,
-                type: "text"
-            }
-        ]
+      content: [
+        {
+          text: `📅 Timetable for ${day}:\n\n${subjects.join(", ")}`,
+          type: "text",
+        },
+      ],
     };
+  } catch (error) {
+    return {
+      content: [
+        {
+          text: `❌ Could not fetch data from Google Sheets. Error: ${error.message}`,
+          type: "text",
+        },
+      ],
+    };
+  }
 }
