@@ -29,6 +29,9 @@ const upload = multer();
 app.use('/pdf', pdfRouter)
 app.use('/users', userRouter)
 app.use('/mcp', mcprouter)
+app.get('/', (req, res) => {
+    res.send('Hello from DocuMind Backend!');
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -330,7 +333,7 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-server.listen(port, () => {
+server.listen( port,() => {
     console.log(`🚀 Server is running on port ${port}`);
     console.log(`🌐 Socket.IO server is ready`);
     console.log(`📄 PDF processing is enabled`);

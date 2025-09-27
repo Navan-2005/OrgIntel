@@ -1,67 +1,91 @@
-import { config } from "dotenv";
-import { google } from "googleapis";
+// Data from the Google Sheet, stored in a JavaScript object.
+const schedule = {
+    monday: ["DBMS Lab", "Open", "Compilers", "Java", "ML"],
+    tuesday: ["Open", "Compilers", "DBMS", "ML", "Java", "Networks"],
+    wednesday: ["Net Lab", "Open"],
+    thursday: ["DBMS", "Networks", "ML"],
+    friday: ["Compilers", "Java", "Networks", "DBMS"],
+    saturday: ["Java", "Compilers", "DBMS", "Networks"]
+};
 
-config();
+// The header row from the sheet. We'll use this to provide context if needed.
+const header = ["Day", "Subjects"]; // Simplified header for this use case
 
-export async function getclasses(day, range = "Sheet1!A1:G10") {
-    console.log('Google API Key:', process.env.GOOGLE_APPLICATION_CREDENTIALS);
-    
-  try {
-    // Authenticate with Google Service Account
-    const auth = new google.auth.GoogleAuth({
-      keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS, // JSON key
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
+/**
+ * Fetches the list of subjects for a given day from the hardcoded schedule.
+ * @param {string} day - The day of the week (e.g., "Monday", "tuesday").
+ * @returns {Promise<object>} An MCP-formatted response object.
+ */
+export async function timetable(day) {
+    try {
+        if (!day || typeof day !== 'string') {
+            throw new Error("A valid day was not provided.");
+        }
 
-    const client = await auth.getClient();
-    const sheets = google.sheets({ version: "v4", auth: client });
+        // Normalize the input day to lowercase to match the object keys
+        const formattedDay = day.trim().toLowerCase();
 
-    const spreadsheetId = process.env.SHEET_ID;
+        // Find the subjects for the given day in our schedule object
+        const subjectsForDay = schedule[formattedDay];
 
-    // Fetch values from Google Sheets
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
+        // Handle cases where the day is not found
+        if (!subjectsForDay) {
+            return {
+                content: [{
+                    type: "text",
+                    text:  `No classes found for "${day}". Please provide a day from Monday to Saturday`
+                }],
+            };
+        }
 
-    const rows = response.data.values || [];
-    if (rows.length === 0) {
-      return {
-        content: [{ text: "No data found in the sheet.", type: "text" }],
-      };
+        // Filter out any "Open" periods to only show actual subjects
+        const actualSubjects = subjectsForDay.filter(subject => subject.toLowerCase() !== 'open');
+        
+        // Handle cases where a day has no actual subjects scheduled (e.g., only "Open" slots)
+        if (actualSubjects.length === 0) {
+            return {
+                content: [{
+                    type: "text",
+                    text: `✅ No classes are scheduled for ${day}. It's an open day!`
+                }],
+            };
+        }
+
+        // Format the output string
+        const responseText = `📅 Timetable for ${day}:\n\n- ${actualSubjects.join("\n- ")}`;
+
+        return {
+            content: [{
+                type: "text",
+                text: responseText
+            }],
+        };
+
+    } catch (err) {
+        // Handle any unexpected errors
+        return {
+            content: [{
+                type: "text",
+                text: `❌ An unexpected error occurred: ${err.message}`
+            }],
+        };
     }
-
-    // First row = header, skip it
-    const body = rows.slice(1);
-
-    // Find row matching the given day
-    const row = body.find(r => r[0]?.toLowerCase() === day.toLowerCase());
-
-    if (!row) {
-      return {
-        content: [{ text: `⚠️ No classes found for "${day}".`, type: "text" }],
-      };
-    }
-
-    // Subjects = all columns after Day
-    const subjects = row.slice(1).filter(Boolean);
-
-    return {
-      content: [
-        {
-          text: `📅 Timetable for ${day}:\n\n${subjects.join(", ")}`,
-          type: "text",
-        },
-      ],
-    };
-  } catch (error) {
-    return {
-      content: [
-        {
-          text: `❌ Could not fetch data from Google Sheets. Error: ${error.message}`,
-          type: "text",
-        },
-      ],
-    };
-  }
 }
+
+// --- Example of how to test this file directly ---
+// To test, you can uncomment the following lines and run node timetable.js
+/*
+async function test() {
+    const day = "Tuesday";
+    const result = await timetable(day);
+    console.log(result.content[0].text);
+    
+    console.log("\n------------------\n");
+    
+    const anotherDay = "Sunday";
+    const anotherResult = await timetable(anotherDay);
+    console.log(anotherResult.content[0].text);
+}
+
+test();
+*/
