@@ -487,17 +487,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onFileUpload, onFileRemov
     } else {
       // Chat Mode
       if (trimmedMessage.startsWith('@ai')) {
-        if (!filesUploaded) {
-          const errorMessage: ChatMessage = {
-            id: `error-${Date.now()}`,
-            type: 'error',
-            message: 'Please upload PDF files first before asking AI questions.',
-            timestamp: new Date(),
-          };
-          setChatHistory((prev) => [...prev, errorMessage]);
-          setMessage('');
-          return;
-        }
+        // if (!filesUploaded) {
+        //   const errorMessage: ChatMessage = {
+        //     id: `error-${Date.now()}`,
+        //     type: 'error',
+        //     message: 'Please upload PDF files first before asking AI questions.',
+        //     timestamp: new Date(),
+        //   };
+        //   setChatHistory((prev) => [...prev, errorMessage]);
+        //   setMessage('');
+        //   return;
+        // }
 
         // ✅ Use HTTP for AI (like old code) — reliable!
         const userAiMessage: ChatMessage = {
