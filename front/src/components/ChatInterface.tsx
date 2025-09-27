@@ -275,6 +275,7 @@
 // };
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, MessageSquare, Zap, X, Eye, File, RotateCcw } from 'lucide-react';
+
 import axios from 'axios';
 
 // Types
