@@ -329,13 +329,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>(AVAILABLE_MODELS[0].id);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
-  const [mode, setMode] = useState<'chat' | 'mcq'>('chat'); // New mode state
+  const [mode, setMode] = useState<'chat' | 'mcp'>('chat'); // Changed from 'mcq' to 'mcp'
 
   // File upload state
-  const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Track uploaded file names to prevent duplicates
+  const uploadedFileNamesRef = useRef<Set<string>>(new Set());
 
   // Initialize session
   useEffect(() => {
@@ -389,24 +391,34 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handleFilesSelected = (files: File[]) => {
-    // Add files to upload queue
-    setFilesToUpload(prev => [...prev, ...files]);
+    // Filter out already uploaded files to prevent duplicates
+    const newFiles = files.filter(file => !uploadedFileNamesRef.current.has(file.name));
     
-    // Add system messages for each file
-    const newMessages = files.map(file => ({
+    if (newFiles.length === 0) {
+      return; // No new files to upload
+    }
+
+    // Add system messages for each new file
+    const newMessages = newFiles.map(file => ({
       type: 'system' as const,
       message: `Uploading ${file.name}...`,
       timestamp: new Date(),
     }));
     setChatHistory(prev => [...prev, ...newMessages]);
+    
+    // Add to uploaded tracking and start uploads immediately
+    newFiles.forEach(file => {
+      uploadedFileNamesRef.current.add(file.name);
+      handleUpload(file); // Upload immediately, don't queue
+    });
   };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  const handleUpload = async (file: File, index: number) => {
-    const fileId = `${Date.now()}-${index}`;
+  const handleUpload = async (file: File) => {
+    const fileId = `${file.name}-${Date.now()}`;
     setUploadingFiles(prev => ({ ...prev, [fileId]: true }));
 
     const formData = new FormData();
@@ -439,9 +451,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // Notify parent to add to documents panel
       onFileUpload([newUploadedFile]);
       setFilesUploaded(true);
-
-      // Remove from upload queue
-      setFilesToUpload(prev => prev.filter(f => f !== file));
     } catch (err: any) {
       console.error('Upload error:', err);
       // Update chat history with error message
@@ -460,18 +469,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       });
     }
   };
-
-  // Auto-upload files when added to queue
-  useEffect(() => {
-    if (filesToUpload.length > 0) {
-      filesToUpload.forEach((file, index) => {
-        const fileId = `${Date.now()}-${index}`;
-        if (!uploadingFiles[fileId]) {
-          handleUpload(file, index);
-        }
-      });
-    }
-  }, [filesToUpload, uploadingFiles]);
 
   // Chat handlers
   const handleSubmit = async (e: React.FormEvent) => {
@@ -498,10 +495,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setLoading(true);
 
     try {
-      // Determine endpoint based on mode
-      const endpoint = mode === 'mcq' 
-        ? 'http://localhost:3000/pdf/generate-mcq' 
-        : 'http://localhost:3000/pdf/chat';
+      // Determine endpoint based on mode - MCP uses different endpoint
+      let endpoint = '';
+      if (mode === 'mcp') {
+        // MCP server endpoint - adjust URL as needed for your MCP server
+        endpoint = 'http://localhost:3000/mcp/chat'; // or your actual MCP server URL
+      } else {
+        // Normal chat endpoint
+        endpoint = 'http://localhost:3000/pdf/chat';
+      }
       
       const response = await axios.post(endpoint, {
         question: question.trim(),
@@ -511,7 +513,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       const botMessage: ChatMessage = {
         type: 'bot',
-        message: response.data.answer || response.data.mcqs || "Sorry, I couldn't generate a response.",
+        message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
         timestamp: new Date(),
       };
       setChatHistory((prev) => [...prev, botMessage]);
@@ -519,7 +521,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.error('Chat error:', err);
       const errorMessage: ChatMessage = {
         type: 'error',
-        message: 'Sorry, I encountered an error. Please try again.',
+        message: mode === 'mcp' 
+          ? 'MCP server error. Please try again.' 
+          : 'Sorry, I encountered an error. Please try again.',
         timestamp: new Date(),
       };
       setChatHistory((prev) => [...prev, errorMessage]);
@@ -530,6 +534,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const clearChat = () => {
     setChatHistory([]);
+    // Reset uploaded files tracking when chat is cleared
+    uploadedFileNamesRef.current.clear();
+    setFilesUploaded(false);
+    // Keep current mode when clearing
+  };
+
+  // Handle mode switching - clear chat when switching modes for clean separation
+  const handleModeChange = (newMode: 'chat' | 'mcp') => {
+    if (newMode !== mode) {
+      setChatHistory([]); // Clear chat history when switching modes
+      setMode(newMode);
+    }
   };
 
   const saveChatHistory = async () => {
@@ -559,7 +575,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
             <Bot className="w-4 h-4 text-white" />
           </div>
-          <h3 className="font-medium text-foreground">AI Assistant</h3>
+          <h3 className="font-medium text-foreground">
+            {mode === 'mcp' ? 'MCP Assistant' : 'AI Assistant'}
+          </h3>
         </div>
         <div className="flex items-center space-x-2">
           <button
@@ -577,14 +595,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       </div>
 
-      {/* Mode Toggle */}
+      {/* Mode Toggle - Now with MCP mode */}
       <div className="p-3 border-b border-border bg-surface">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-xs font-medium text-foreground">Mode:</span>
             <div className="flex rounded-md border border-input overflow-hidden">
               <button
-                onClick={() => setMode('chat')}
+                onClick={() => handleModeChange('chat')}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                   mode === 'chat'
                     ? 'bg-primary text-primary-foreground'
@@ -595,20 +613,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 Chat
               </button>
               <button
-                onClick={() => setMode('mcq')}
+                onClick={() => handleModeChange('mcp')}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  mode === 'mcq'
+                  mode === 'mcp'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-background text-foreground hover:bg-accent'
                 }`}
               >
                 <ListChecks className="w-3 h-3 inline mr-1" />
-                MCQ
+                MCP
               </button>
             </div>
           </div>
           <span className="text-xs text-muted-foreground">
-            {mode === 'chat' ? 'Ask questions about your documents' : 'Generate multiple-choice questions'}
+            {mode === 'chat' 
+              ? 'Ask questions about your documents' 
+              : 'Connect to MCP server for specialized processing'}
           </span>
         </div>
       </div>
@@ -621,12 +641,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <MessageCircle className="w-6 h-6 text-primary" />
             </div>
             <p className="text-sm font-medium text-foreground mb-2">
-              {mode === 'chat' ? 'Ready to help!' : 'Generate MCQs from your documents!'}
+              {mode === 'chat' ? 'Ready to help!' : 'MCP Server Ready!'}
             </p>
             <p className="text-xs text-muted-foreground">
               {mode === 'chat' 
                 ? 'Upload documents and start asking questions' 
-                : 'Upload documents and request MCQ generation'}
+                : 'Upload documents and connect to MCP server'}
             </p>
           </div>
         ) : (
@@ -709,7 +729,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     ></div>
                   </div>
                   <span className="text-xs">
-                    {mode === 'chat' ? 'Thinking...' : 'Generating MCQs...'}
+                    {mode === 'chat' ? 'Thinking...' : 'Processing with MCP...'}
                   </span>
                 </div>
               </div>
@@ -722,7 +742,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Chat Input */}
       <div className="p-4 border-t border-border bg-surface">
         {/* Model Selector Dropdown */}
-        {showModelSelector && (
+        {showModelSelector && mode === 'chat' && ( // Only show model selector in chat mode
           <div className="mb-3 p-2 bg-background rounded-lg border border-input">
             <label className="block text-xs font-medium text-foreground mb-1">
               Select AI Model
@@ -751,7 +771,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               placeholder={
                 mode === 'chat' 
                   ? "Ask about your documents..." 
-                  : "Describe the MCQs you want to generate..."
+                  : "Send request to MCP server..."
               }
               className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10"
               onKeyDown={(e) => {
@@ -771,14 +791,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               >
                 <Upload className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                onClick={() => setShowModelSelector(!showModelSelector)}
-                className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-accent"
-                title="Select model"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
+              {mode === 'chat' && ( // Only show model selector button in chat mode
+                <button
+                  type="button"
+                  onClick={() => setShowModelSelector(!showModelSelector)}
+                  className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-accent"
+                  title="Select model"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <input
               type="file"
@@ -800,7 +822,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <div className="mt-2 text-xs text-muted-foreground text-center">
           {mode === 'chat' 
             ? 'Press Enter to send • Shift+Enter for new line' 
-            : 'Press Enter to generate MCQs'}
+            : 'Press Enter to send to MCP server'}
         </div>
       </div>
 
