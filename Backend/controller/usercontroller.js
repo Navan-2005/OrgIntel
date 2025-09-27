@@ -1,14 +1,14 @@
 const user=require('../models/user')
 
 const register=async(req,res)=>{
-    const {name,password,email}=req.body;
+    const {name,password,email,role}=req.body;
     try {
         const existingUser=await user.findOne({email});
         if(existingUser){
             return res.status(400).json({error:"User already exists"});
         }
         const hashedPassword=await user.hashPassword(password);
-        const newUser=new user({name,password:hashedPassword,email});
+        const newUser=new user({name,password:hashedPassword,email,role});
         const token=newUser.generateAuthToken();
         await newUser.save();
         res.status(200).json({newUser,token});
