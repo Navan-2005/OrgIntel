@@ -275,7 +275,7 @@
 // };
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, MessageSquare, Zap, X, Eye, File, RotateCcw } from 'lucide-react';
-
+import { useSelector } from 'react-redux';
 import axios from 'axios';
 
 // Types
@@ -307,12 +307,18 @@ interface ChatInterfaceProps {
   onFileRemove: (id: string) => void;
 }
 
+
+
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onFileUpload,
   onFileRemove,
 }) => {
-  const {user}=localStorage.getItem('user')
-  console.log('User : ',User);
+  // const {user}=localStorage.getItem('user')
+  // console.log('User : ',User);
+  const {user}=useSelector((state:any)=>state.user);
+  useEffect(()=>{
+  console.log('User : ',user);
+})
   
   // Chat state
   const [question, setQuestion] = useState('');

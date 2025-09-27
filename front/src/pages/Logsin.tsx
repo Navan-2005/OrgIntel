@@ -3,6 +3,7 @@ import { Eye, EyeOff, User, Mail, Lock, LogIn, UserPlus, Code2, GraduationCap } 
 import {useSelector,useDispatch} from 'react-redux';
 import axios from 'axios'
 import { loginUser } from '../redux/slices/authSlice';
+import { setUser } from '@/redux/slices/userslice';
 
 // Type definitions
 interface FormData {
@@ -137,7 +138,7 @@ const LoginSignup: React.FC = () => {
 
       if (response) {
         // Store token and user data including role
-        // dispatch(loginUser({ email, password }));
+        dispatch(setUser(response.data.user));
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', response.data.user);
         setMessage('Login successful!');
