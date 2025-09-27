@@ -308,19 +308,13 @@ interface ChatInterfaceProps {
   onFileRemove: (id: string) => void;
 }
 
-
-
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onFileUpload,
   onFileRemove,
 }) => {
-  // const {user}=localStorage.getItem('user')
-  // console.log('User : ',User);
-  const {user}=useSelector((state:any)=>state.user);
-  useEffect(()=>{
-  console.log('User : ',user);
-})
-  
+  const { user } = useSelector((state: any) => state.user);
+  const userRole = user?.role; // e.g., 'junior' or 'senior'
+
   // Chat state
   const [question, setQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -332,14 +326,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
   const [mode, setMode] = useState<'chat' | 'mcp'>('chat');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null); // For modal
+  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
 
   // File upload state
   const [dragActive, setDragActive] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Track uploaded file names to prevent duplicates
   const uploadedFileNamesRef = useRef<Set<string>>(new Set());
 
   // Initialize session
@@ -368,7 +360,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         setChatHistory([]);
       }
     };
-
     loadChatHistory();
   }, [mode]);
 
@@ -415,6 +406,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (userRole === 'junior') return;
     if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
     } else if (e.type === 'dragleave') {
@@ -426,6 +418,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
+
+    // 🔒 Block junior uploads
+    if (userRole === 'junior') {
+      const errorMessage: ChatMessage = {
+        type: 'error',
+        message: '❌ You do not have permission to upload documents. Contact a senior user.',
+        timestamp: new Date(),
+      };
+      setChatHistory(prev => [...prev, errorMessage]);
+      return;
+    }
+
     const droppedFiles = Array.from(e.dataTransfer.files).filter(
       (file) => file.type === 'application/pdf'
     );
@@ -444,8 +448,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handleFilesSelected = (files: File[]) => {
+    // 🔒 Block junior uploads
+    if (userRole === 'junior') {
+      const errorMessage: ChatMessage = {
+        type: 'error',
+        message: '❌ You do not have permission to upload documents. Contact a senior user.',
+        timestamp: new Date(),
+      };
+      setChatHistory(prev => [...prev, errorMessage]);
+      return;
+    }
+
     const newFiles = files.filter(file => !uploadedFileNamesRef.current.has(file.name));
-    
     if (newFiles.length === 0) return;
 
     const newMessages = newFiles.map(file => ({
@@ -454,7 +468,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       timestamp: new Date(),
     }));
     setChatHistory(prev => [...prev, ...newMessages]);
-    
+
     newFiles.forEach(file => {
       uploadedFileNamesRef.current.add(file.name);
       handleUpload(file);
@@ -545,68 +559,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!filesUploaded) {
-  //     const errorMessage: ChatMessage = {
-  //       type: 'bot',
-  //       message: 'Please upload PDF files first before asking questions.',
-  //       timestamp: new Date(),
-  //     };
-  //     setChatHistory((prev) => [...prev, errorMessage]);
-  //     return;
-  //   }
-
-  //   if (!question.trim()) return;
-
-  //   const userMessage: ChatMessage = {
-  //     type: 'user',
-  //     message: question,
-  //     timestamp: new Date(),
-  //   };
-  //   setChatHistory((prev) => [...prev, userMessage]);
-  //   setQuestion('');
-  //   setLoading(true);
-
-  //   try {
-  //     let endpoint = '';
-  //     if (mode === 'mcp') {
-  //       // endpoint = 'http://localhost:3000/mcp/chat';
-  //       const response= await axios.post('http://localhost:3000/mcp/chat', {
-  //         message: question.trim(),
-  //         userId:'123'
-  //       })
-  //     } else {
-  //       // endpoint = 'http://localhost:3000/pdf/chat';
-  //       const response = await axios.post(endpoint, {
-  //       question: question.trim(),
-  //       sessionId,
-  //       model: selectedModel,
-  //     });
-  //     }
-
-  //     const botMessage: ChatMessage = {
-  //       type: 'bot',
-  //       message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
-  //       timestamp: new Date(),
-  //     };
-  //     setChatHistory((prev) => [...prev, botMessage]);
-  //   } catch (err: any) {
-  //     console.error('Chat error:', err);
-  //     const errorMessage: ChatMessage = {
-  //       type: 'error',
-  //       message: mode === 'mcp' 
-  //         ? 'MCP server error. Please try again.' 
-  //         : 'Sorry, I encountered an error. Please try again.',
-  //       timestamp: new Date(),
-  //     };
-  //     setChatHistory((prev) => [...prev, errorMessage]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const handleSubmit = async (e: React.FormEvent) => {
-
     e.preventDefault();
     
     if (!filesUploaded) {
@@ -619,16 +572,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       return;
     }
 
-    if (!question.trim()) return;
+  if (!question.trim()) return;
 
-    const userMessage: ChatMessage = {
-      type: 'user',
-      message: question,
-      timestamp: new Date(),
-    };
-    setChatHistory((prev) => [...prev, userMessage]);
-    setQuestion('');
-    setLoading(true);
+  const userMessage: ChatMessage = {
+    type: 'user',
+    message: question,
+    timestamp: new Date(),
+  };
+  setChatHistory((prev) => [...prev, userMessage]);
+  setQuestion('');
+  setLoading(true);
 
     try {
       let response;
@@ -638,10 +591,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           message: question.trim(),
           userId: '123'
         });
-      sendMessage('project-message',{
-            question,
-            sender: user
-        })
       } else {
         response = await axios.post('http://localhost:3000/pdf/chat', {
           question: question.trim(),
@@ -650,28 +599,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         });
       }
 
-      const botMessage: ChatMessage = {
-        type: 'bot',
-        message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
-        timestamp: new Date(),
-      };
-      setChatHistory((prev) => [...prev, botMessage]);
-      
-    } catch (err: any) {
-      console.error('Chat error:', err);
-      const errorMessage: ChatMessage = {
-        type: 'error',
-        message: mode === 'mcp' 
-          ? 'MCP server error. Please try again.' 
-          : 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date(),
-      };
-      setChatHistory((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
-    }
-};
+    const botMessage: ChatMessage = {
+      type: 'bot',
+      message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
+      timestamp: new Date(),
+    };
+    setChatHistory((prev) => [...prev, botMessage]);
 
+  } catch (err: any) {
+    console.error('Chat error:', err);
+    const errorMessage: ChatMessage = {
+      type: 'error',
+      message: mode === 'mcp'
+        ? 'MCP server error. Please try again.'
+        : 'Sorry, I encountered an error. Please try again.',
+      timestamp: new Date(),
+    };
+    setChatHistory((prev) => [...prev, errorMessage]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const clearChat = () => {
     setChatHistory([]);
@@ -814,10 +762,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 ? 'Upload PDF documents and start asking questions about their content.' 
                 : 'Upload documents and send requests to the MCP server for specialized processing.'}
             </p>
-            <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-muted-foreground">
-              <Upload className="w-3 h-3" />
-              <span>Drag & drop PDF files or click the upload button</span>
-            </div>
+            {!user || userRole !== 'junior' ? (
+              <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-muted-foreground">
+                <Upload className="w-3 h-3" />
+                <span>Drag & drop PDF files or click the upload button</span>
+              </div>
+            ) : (
+              <div className="mt-4 text-xs text-muted-foreground">
+                Contact a senior user to upload documents.
+              </div>
+            )}
           </div>
         ) : (
           chatHistory.map((chat, index) => (
@@ -992,14 +946,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               disabled={loading}
             />
             <div className="absolute right-3 bottom-3 flex space-x-2">
-              <button
-                type="button"
-                onClick={triggerFileInput}
-                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent/50 transition-all duration-200"
-                title="Attach files"
-              >
-                <Upload className="w-4 h-4" />
-              </button>
+              {/* 🔒 Only show upload button if NOT junior */}
+              {userRole !== 'junior' && (
+                <button
+                  type="button"
+                  onClick={triggerFileInput}
+                  className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent/50 transition-all duration-200"
+                  title="Attach files"
+                >
+                  <Upload className="w-4 h-4" />
+                </button>
+              )}
               {mode === 'chat' && (
                 <button
                   type="button"
@@ -1035,8 +992,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       </div>
 
-      {/* Drag and Drop Overlay */}
-      {dragActive && (
+      {/* Drag and Drop Overlay — only for non-junior */}
+      {dragActive && userRole !== 'junior' && (
         <div
           className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-xl z-10 flex items-center justify-center backdrop-blur-sm"
           onDragEnter={handleDrag}
