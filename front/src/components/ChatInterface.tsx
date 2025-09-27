@@ -276,6 +276,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, MessageCircle, Upload, Trash2, FileText, User, Settings, CheckCircle, MessageSquare, Zap, X, Eye, File, RotateCcw } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import { initializeSocket,receiveMessage,sendMessage } from '../config/socket';
 import axios from 'axios';
 
 // Types
@@ -519,6 +520,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
+  useEffect(()=>{
+    initializeSocket('local');
+    console.log('socket initialized');
+  })
+
   const removeFile = (fileId: string) => {
     setUploadedFiles(prev => {
       const fileToRemove = prev.find(f => f.id === fileId);
@@ -600,6 +606,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   //   }
   // };
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     
     if (!filesUploaded) {
@@ -631,6 +638,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           message: question.trim(),
           userId: '123'
         });
+      sendMessage('project-message',{
+            question,
+            sender: user
+        })
       } else {
         response = await axios.post('http://localhost:3000/pdf/chat', {
           question: question.trim(),
