@@ -529,8 +529,69 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!filesUploaded) {
+  //     const errorMessage: ChatMessage = {
+  //       type: 'bot',
+  //       message: 'Please upload PDF files first before asking questions.',
+  //       timestamp: new Date(),
+  //     };
+  //     setChatHistory((prev) => [...prev, errorMessage]);
+  //     return;
+  //   }
+
+  //   if (!question.trim()) return;
+
+  //   const userMessage: ChatMessage = {
+  //     type: 'user',
+  //     message: question,
+  //     timestamp: new Date(),
+  //   };
+  //   setChatHistory((prev) => [...prev, userMessage]);
+  //   setQuestion('');
+  //   setLoading(true);
+
+  //   try {
+  //     let endpoint = '';
+  //     if (mode === 'mcp') {
+  //       // endpoint = 'http://localhost:3000/mcp/chat';
+  //       const response= await axios.post('http://localhost:3000/mcp/chat', {
+  //         message: question.trim(),
+  //         userId:'123'
+  //       })
+  //     } else {
+  //       // endpoint = 'http://localhost:3000/pdf/chat';
+  //       const response = await axios.post(endpoint, {
+  //       question: question.trim(),
+  //       sessionId,
+  //       model: selectedModel,
+  //     });
+  //     }
+
+  //     const botMessage: ChatMessage = {
+  //       type: 'bot',
+  //       message: response.data.answer || response.data.response || "Sorry, I couldn't generate a response.",
+  //       timestamp: new Date(),
+  //     };
+  //     setChatHistory((prev) => [...prev, botMessage]);
+  //   } catch (err: any) {
+  //     console.error('Chat error:', err);
+  //     const errorMessage: ChatMessage = {
+  //       type: 'error',
+  //       message: mode === 'mcp' 
+  //         ? 'MCP server error. Please try again.' 
+  //         : 'Sorry, I encountered an error. Please try again.',
+  //       timestamp: new Date(),
+  //     };
+  //     setChatHistory((prev) => [...prev, errorMessage]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!filesUploaded) {
       const errorMessage: ChatMessage = {
         type: 'bot',
@@ -553,18 +614,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setLoading(true);
 
     try {
-      let endpoint = '';
-      if (mode === 'mcp') {
-        endpoint = 'http://localhost:3000/mcp/chat';
-      } else {
-        endpoint = 'http://localhost:3000/pdf/chat';
-      }
+      let response;
       
-      const response = await axios.post(endpoint, {
-        question: question.trim(),
-        sessionId,
-        model: selectedModel,
-      });
+      if (mode === 'mcp') {
+        response = await axios.post('http://localhost:3000/mcp/chat', {
+          message: question.trim(),
+          userId: '123'
+        });
+      } else {
+        response = await axios.post('http://localhost:3000/pdf/chat', {
+          question: question.trim(),
+          sessionId,
+          model: selectedModel,
+        });
+      }
 
       const botMessage: ChatMessage = {
         type: 'bot',
@@ -572,6 +635,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         timestamp: new Date(),
       };
       setChatHistory((prev) => [...prev, botMessage]);
+      
     } catch (err: any) {
       console.error('Chat error:', err);
       const errorMessage: ChatMessage = {
@@ -585,7 +649,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+};
+
 
   const clearChat = () => {
     setChatHistory([]);

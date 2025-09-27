@@ -2,16 +2,16 @@ const express = require('express');
 const { GoogleGenAI } = require('@google/genai');
 const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 const { SSEClientTransport } = require('@modelcontextprotocol/sdk/client/sse.js');
-const { config } = require('dotenv');
+// const { config } = require('dotenv');
 
-config();
+// config();
 
 const router = express.Router();
 let tools = [];
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const mcpClient = new Client({ name: 'example-client', version: '1.0.0' });
 
-console.log('API Key:', process.env.GEMINI_API_KEY);
+console.log('Google Gemini API Key:', process.env.GEMINI_API_KEY);
 
 const chatHistories = new Map(); // userId => history[]
 
