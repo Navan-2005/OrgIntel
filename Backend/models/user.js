@@ -16,6 +16,11 @@ const userSchema=new mongoose.Schema({
         type: String,
         required: true,
         unique: true
+      },
+      role: {
+        type: String,
+        enum: ['junior', 'senior'],
+        default: 'junior'
       }
     });
 
